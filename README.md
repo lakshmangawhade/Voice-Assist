@@ -1,4 +1,77 @@
-# Getting Started with Create React App
+# Dental AI Assistant - Krish
+
+A voice-activated AI assistant for dental practices powered by Groq's Llama 3.1 8B Instant model and Deepgram for high-accuracy speech recognition.
+
+## Features
+
+- 🎤 **Wake Word Detection**: Say "krish" to activate voice commands
+- 🎯 **Deepgram Voice Recognition**: High-accuracy speech-to-text using Deepgram
+- 💬 **Text & Voice Chat**: Interact via text input or voice commands
+- 🤖 **AI-Powered**: Powered by Groq's Llama 3.1 8B Instant model
+- 🔊 **Text-to-Speech**: AI responses are spoken aloud
+- ⏱️ **Continuous Listening**: Mic stays open for 5 seconds after AI response
+- 🔒 **Secure**: API keys stored in environment variables
+
+## Setup Instructions
+
+### 1. Install Dependencies
+
+```bash
+npm install
+```
+
+### 2. Configure API Keys
+
+1. Get your API keys:
+   - **Groq API Key**: [Groq Console](https://console.groq.com/)
+   - **Deepgram API Key**: [Deepgram Console](https://console.deepgram.com/)
+
+2. Create a `.env` file in the root directory (same level as `package.json`)
+
+3. Add your API keys:
+
+```env
+REACT_APP_GROQ_API_KEY=your_groq_api_key_here
+REACT_APP_DEEPGRAM_API_KEY=your_deepgram_api_key_here
+```
+
+**Important**: Replace the placeholder values with your actual API keys.
+
+### 3. Start the Application
+
+```bash
+npm start
+```
+
+The app will open at [http://localhost:3000](http://localhost:3000)
+
+## Usage
+
+### Wake Word Activation
+
+1. **Say "krish"** - The microphone will automatically activate and start listening
+2. Speak your command or question
+3. The AI will respond both in text and voice
+4. Mic stays open for 5 seconds for continuous conversation
+
+### Manual Activation
+
+- Click the microphone button to manually activate voice input
+- Or type your message in the text input field
+
+### Browser Requirements
+
+- **Chrome/Edge**: Full support for wake word detection
+- **Firefox/Safari**: May have limited speech recognition support
+- **Microphone Access**: Grant microphone permissions when prompted
+
+## Security Notes
+
+- The `.env` file is already added to `.gitignore` to prevent committing your API key
+- Never commit your API key to version control
+- API calls are made directly from the browser (client-side)
+
+---
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
