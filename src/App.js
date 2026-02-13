@@ -1,6 +1,80 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Mic, MicOff, Send } from 'lucide-react';
+import { Mic, MicOff, Send, Sun, Moon, Phone, X } from 'lucide-react';
 import './App.css';
+
+// Import light theme images
+import light_tooth1_1 from './assets/light/tooth1_1.png';
+import light_tooth1_2 from './assets/light/tooth1_2.png';
+import light_tooth1_3 from './assets/light/tooth1_3.png';
+import light_tooth1_4 from './assets/light/tooth1_4.png';
+import light_tooth1_5 from './assets/light/tooth1_5.png';
+import light_tooth1_6 from './assets/light/tooth1_6.png';
+import light_tooth2_1 from './assets/light/tooth2_1.png';
+import light_tooth2_2 from './assets/light/tooth2_2.png';
+import light_tooth2_3 from './assets/light/tooth2_3.png';
+import light_tooth2_4 from './assets/light/tooth2_4.png';
+import light_tooth2_5 from './assets/light/tooth2_5.png';
+import light_tooth2_6 from './assets/light/tooth2_6.png';
+import light_tooth2_7 from './assets/light/tooth2_7.png';
+import light_tooth3_1 from './assets/light/tooth3_1.png';
+import light_tooth3_2 from './assets/light/tooth3_2.png';
+import light_tooth3_3 from './assets/light/tooth3_3.png';
+import light_tooth3_4 from './assets/light/tooth3_4.png';
+import light_tooth3_5 from './assets/light/tooth3_5.png';
+import light_tooth3_6 from './assets/light/tooth3_6.png';
+import light_tooth3_7 from './assets/light/tooth3_7.png';
+import light_tooth4_1 from './assets/light/tooth4_1.png';
+import light_tooth4_2 from './assets/light/tooth4_2.png';
+import light_tooth4_3 from './assets/light/tooth4_3.png';
+import light_tooth4_4 from './assets/light/tooth4_4.png';
+import light_tooth4_5 from './assets/light/tooth4_5.png';
+import light_tooth4_6 from './assets/light/tooth4_6.png';
+import light_tooth4_7 from './assets/light/tooth4_7.png';
+
+// Import dark theme images
+import dark_tooth1_1 from './assets/dark/toothh1_1-modified.png';
+import dark_tooth1_2 from './assets/dark/tooth1_2-modified.png';
+import dark_tooth1_3 from './assets/dark/tooth1_3-modified.png';
+import dark_tooth1_4 from './assets/dark/tooth1_4-modified.png';
+import dark_tooth1_5 from './assets/dark/tooth1_5-modified.png';
+import dark_tooth1_6 from './assets/dark/tooth1_6-modified.png';
+import dark_tooth2_1 from './assets/dark/tooth2_1-modified.png';
+import dark_tooth2_2 from './assets/dark/tooth2_2-modified.png';
+import dark_tooth2_3 from './assets/dark/tooth2_3-modified.png';
+import dark_tooth2_4 from './assets/dark/tooth2_4-modified.png';
+import dark_tooth2_5 from './assets/dark/tooth2_5-modified.png';
+import dark_tooth2_6 from './assets/dark/tooth2_6-modified.png';
+import dark_tooth2_7 from './assets/dark/tooth2_7-modified.png';
+import dark_tooth3_1 from './assets/dark/tooth3_1-modified.png';
+import dark_tooth3_2 from './assets/dark/tooth3_2-modified.png';
+import dark_tooth3_3 from './assets/dark/tooth3_3-modified.png';
+import dark_tooth3_4 from './assets/dark/tooth3_4-modified.png';
+import dark_tooth3_5 from './assets/dark/tooth3_5-modified.png';
+import dark_tooth3_6 from './assets/dark/tooth3_6-modified.png';
+import dark_tooth3_7 from './assets/dark/tooth3_7-modified.png';
+import dark_tooth4_1 from './assets/dark/tooth4_1-modified.png';
+import dark_tooth4_2 from './assets/dark/tooth4_2-modified.png';
+import dark_tooth4_3 from './assets/dark/tooth4_3-modified.png';
+import dark_tooth4_4 from './assets/dark/tooth4_4-modified.png';
+import dark_tooth4_5 from './assets/dark/tooth4_5-modified.png';
+import dark_tooth4_6 from './assets/dark/tooth4_6-modified.png';
+import dark_tooth4_7 from './assets/dark/tooth4_7-modified.png';
+
+// Array of light theme images
+const lightImageSequence = [
+  light_tooth1_1, light_tooth1_2, light_tooth1_3, light_tooth1_4, light_tooth1_5, light_tooth1_6,
+  light_tooth2_1, light_tooth2_2, light_tooth2_3, light_tooth2_4, light_tooth2_5, light_tooth2_6, light_tooth2_7,
+  light_tooth3_1, light_tooth3_2, light_tooth3_3, light_tooth3_4, light_tooth3_5, light_tooth3_6, light_tooth3_7,
+  light_tooth4_1, light_tooth4_2, light_tooth4_3, light_tooth4_4, light_tooth4_5, light_tooth4_6, light_tooth4_7
+];
+
+// Array of dark theme images
+const darkImageSequence = [
+  dark_tooth1_1, dark_tooth1_2, dark_tooth1_3, dark_tooth1_4, dark_tooth1_5, dark_tooth1_6,
+  dark_tooth2_1, dark_tooth2_2, dark_tooth2_3, dark_tooth2_4, dark_tooth2_5, dark_tooth2_6, dark_tooth2_7,
+  dark_tooth3_1, dark_tooth3_2, dark_tooth3_3, dark_tooth3_4, dark_tooth3_5, dark_tooth3_6, dark_tooth3_7,
+  dark_tooth4_1, dark_tooth4_2, dark_tooth4_3, dark_tooth4_4, dark_tooth4_5, dark_tooth4_6, dark_tooth4_7
+];
 
 const DentalVoiceAI = () => {
   const [isListening, setIsListening] = useState(false);
@@ -11,7 +85,28 @@ const DentalVoiceAI = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [userInteracted, setUserInteracted] = useState(false);
+  const [showIntro, setShowIntro] = useState(true);
+  const [animationPosition, setAnimationPosition] = useState('center'); // 'center' or 'background'
+  const [showTimeoutPopup, setShowTimeoutPopup] = useState(false);
+  const [chatActive, setChatActive] = useState(false);
+  const [showCallModal, setShowCallModal] = useState(false);
+  const [callInfo, setCallInfo] = useState(null);
+  const [patientPhone, setPatientPhone] = useState('');
+  const [patientName, setPatientName] = useState('');
+  const [isCalling, setIsCalling] = useState(false);
+  const [theme, setTheme] = useState(() => {
+    const savedTheme = localStorage.getItem('theme');
+    return savedTheme || 'dark';
+  });
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  
+  // Get image sequence based on theme
+  const imageSequence = theme === 'light' ? darkImageSequence : lightImageSequence;
   const chatEndRef = useRef(null);
+  const imageAnimationIntervalRef = useRef(null);
+  const showIntroRef = useRef(true);
+  const inactivityTimeoutRef = useRef(null);
+  const lastInteractionRef = useRef(Date.now());
   const recognitionRef = useRef(null);
   const wakeWordRecognitionRef = useRef(null);
   const inputRef = useRef(null);
@@ -40,23 +135,125 @@ const DentalVoiceAI = () => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [conversationLog]);
 
-  // Check API keys on mount
+  // Sync showIntro ref with state
   useEffect(() => {
-    const groqApiKey = process.env.REACT_APP_GROQ_API_KEY;
-    const deepgramApiKey = process.env.REACT_APP_DEEPGRAM_API_KEY;
-    
-    if (!groqApiKey || groqApiKey === 'your_groq_api_key_here' || groqApiKey.trim() === '') {
-      addToLog('System', '⚠️ Groq API Key not configured. Please add REACT_APP_GROQ_API_KEY to your .env file and restart the server.', 'system');
-    } else {
-      console.log('✅ Groq API Key configured successfully');
+    showIntroRef.current = showIntro;
+  }, [showIntro]);
+
+  // 2-minute inactivity timeout popup
+  useEffect(() => {
+    if (!showIntro) {
+      const resetInactivityTimer = () => {
+        lastInteractionRef.current = Date.now();
+        setShowTimeoutPopup(false);
+        
+        if (inactivityTimeoutRef.current) {
+          clearTimeout(inactivityTimeoutRef.current);
+        }
+        
+        inactivityTimeoutRef.current = setTimeout(() => {
+          setShowTimeoutPopup(true);
+        }, 120000); // 2 minutes
+      };
+
+      // Reset timer on any interaction
+      const handleInteraction = () => {
+        resetInactivityTimer();
+      };
+
+      resetInactivityTimer();
+
+      window.addEventListener('click', handleInteraction);
+      window.addEventListener('keydown', handleInteraction);
+      window.addEventListener('touchstart', handleInteraction);
+
+      return () => {
+        window.removeEventListener('click', handleInteraction);
+        window.removeEventListener('keydown', handleInteraction);
+        window.removeEventListener('touchstart', handleInteraction);
+        if (inactivityTimeoutRef.current) {
+          clearTimeout(inactivityTimeoutRef.current);
+        }
+      };
     }
+  }, [showIntro]);
+
+  // Preload all images for smooth animation
+  useEffect(() => {
+    // Preload current theme images
+    imageSequence.forEach((imageSrc) => {
+      const img = new Image();
+      img.src = imageSrc;
+    });
     
-    if (!deepgramApiKey || deepgramApiKey === 'your_deepgram_api_key_here' || deepgramApiKey.trim() === '') {
-      addToLog('System', '⚠️ Deepgram API Key not configured. Please add REACT_APP_DEEPGRAM_API_KEY to your .env file. Falling back to browser speech synthesis.', 'system');
-    } else {
-      console.log('✅ Deepgram API Key configured successfully');
-      console.log('✅ Deepgram TTS will be used for voice output');
-    }
+    // Preload other theme images in background
+    const otherSequence = theme === 'light' ? darkImageSequence : lightImageSequence;
+    otherSequence.forEach((imageSrc) => {
+      const img = new Image();
+      img.src = imageSrc;
+    });
+  }, [theme]);
+  
+  // Save theme to localStorage
+  useEffect(() => {
+    localStorage.setItem('theme', theme);
+    document.documentElement.setAttribute('data-theme', theme);
+  }, [theme]);
+  
+  // Set initial theme attribute
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+  }, []);
+  
+  const toggleTheme = () => {
+    setTheme(prevTheme => prevTheme === 'light' ? 'dark' : 'light');
+  };
+
+  // Image animation at 24fps (41.67ms per frame)
+  useEffect(() => {
+    const FPS = 5;
+    const frameInterval = 1000 / FPS; // ~41.67ms per frame
+
+    imageAnimationIntervalRef.current = setInterval(() => {
+      setCurrentImageIndex((prevIndex) => {
+        return (prevIndex + 1) % imageSequence.length;
+      });
+    }, frameInterval);
+
+    return () => {
+      if (imageAnimationIntervalRef.current) {
+        clearInterval(imageAnimationIntervalRef.current);
+        imageAnimationIntervalRef.current = null;
+      }
+    };
+  }, []);
+
+  // Backend API URL configuration
+  const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8000';
+
+  // Check backend connection on mount
+  useEffect(() => {
+    const checkBackend = async () => {
+      try {
+        const response = await fetch(`${BACKEND_URL}/health`);
+        if (response.ok) {
+          const data = await response.json();
+          console.log('✅ Backend connected successfully');
+          if (!data.llm_configured) {
+            addToLog('System', '⚠️ Backend LLM service not configured. Please check backend .env file.', 'system');
+          }
+          if (!data.tts_configured) {
+            addToLog('System', '⚠️ Backend TTS service not configured. Will fall back to browser speech synthesis.', 'system');
+          }
+        } else {
+          addToLog('System', '⚠️ Backend health check failed. Please ensure the backend server is running.', 'system');
+        }
+      } catch (error) {
+        console.error('Backend connection error:', error);
+        addToLog('System', '⚠️ Cannot connect to backend. Please ensure the backend server is running on ' + BACKEND_URL, 'system');
+      }
+    };
+    checkBackend();
   }, []);
 
   // Enable user interaction for audio autoplay
@@ -131,7 +328,7 @@ const DentalVoiceAI = () => {
     clearSilenceTimeout();
     
     silenceTimeoutRef.current = setTimeout(() => {
-      console.log('5 seconds of silence - returning to wake word mode');
+      //console.log('5 seconds of silence - returning to wake word mode');
       stopCommandRecognition();
       setIsWakeWordMode(true);
       setTimeout(() => startWakeWordDetection(), 300);
@@ -183,10 +380,10 @@ const DentalVoiceAI = () => {
       console.log('✅ Wake word detection started - listening for "krish"');
       
       // Only show the message once when first starting
-      if (!hasShownWakeWordMessageRef.current) {
-        addToLog('System', `Listening for wake word "krish"...`, 'system');
-        hasShownWakeWordMessageRef.current = true;
-      }
+      //if (!hasShownWakeWordMessageRef.current) {
+      //  addToLog('System', `Listening for wake word "krish"...`, 'system');
+      //  hasShownWakeWordMessageRef.current = true;
+      //}
     } catch (error) {
       if (error.name === 'InvalidStateError') {
         console.log('Wake word recognition already started');
@@ -211,7 +408,7 @@ const DentalVoiceAI = () => {
       setIsListening(true);
       setIsWakeWordMode(false);
       console.log('✅ Command listening started');
-      addToLog('System', '🎤 Activated! Listening for your command...', 'system');
+      //addToLog('System', '🎤 Activated! Listening for your command...', 'system');
       
       startSilenceTimer();
     } catch (error) {
@@ -257,6 +454,19 @@ const DentalVoiceAI = () => {
         if (hasWakeWord && isWakeWordModeRef.current) {
           console.log('🎯 WAKE WORD DETECTED:', transcript);
           wakeWordActiveRef.current = false;
+          
+          // Hide intro and move animation to background on wake word detection
+          if (showIntroRef.current) {
+            setShowIntro(false);
+            setTimeout(() => {
+              setAnimationPosition('background');
+              setChatActive(true);
+            }, 100);
+          }
+
+          // Reset inactivity timer
+          lastInteractionRef.current = Date.now();
+          setShowTimeoutPopup(false);
           
           try {
             wakeWordRecognitionRef.current.stop();
@@ -391,14 +601,7 @@ const DentalVoiceAI = () => {
   }, []);
 
   const callGroqAPI = async (userMessage, currentConversationLog) => {
-    const apiKey = process.env.REACT_APP_GROQ_API_KEY;
-    
-    if (!apiKey || apiKey === 'your_groq_api_key_here' || apiKey.trim() === '') {
-      const errorMsg = 'Groq API key is not configured. Please:\n1. Create a .env file in the root directory\n2. Add: REACT_APP_GROQ_API_KEY=your_actual_api_key\n3. Restart the development server (npm start)';
-      console.error(errorMsg);
-      throw new Error(errorMsg);
-    }
-
+    // Build conversation history for backend
     const conversationHistory = currentConversationLog
       .filter(log => log.type === 'user' || log.type === 'ai')
       .map(log => ({
@@ -407,72 +610,103 @@ const DentalVoiceAI = () => {
       }));
 
     try {
-      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      const response = await fetch(`${BACKEND_URL}/api/chat`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${apiKey}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'llama-3.1-8b-instant',
-          messages: [
-            {
-              role: 'system',
-              content: 'You are a helpful dental practice AI assistant named Krish. You help with appointments, patient information, scheduling, and general dental practice questions. Keep your responses concise and conversational, ideally under 3 sentences unless more detail is specifically requested. Be professional and friendly.'
-            },
-            ...conversationHistory,
-            {
-              role: 'user',
-              content: userMessage
-            }
-          ],
-          temperature: 0.7,
-          max_tokens: 1024,
-          top_p: 1,
-          stream: false
+          message: userMessage,
+          conversation_history: conversationHistory
         })
       });
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error?.message || `API error: ${response.status} ${response.statusText}`);
+        throw new Error(errorData.error || `Backend error: ${response.status} ${response.statusText}`);
       }
 
       const data = await response.json();
-      return data.choices[0]?.message?.content || 'I apologize, but I could not generate a response.';
+      
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to get response from backend');
+      }
+
+      // Return both response and call_info
+      return {
+        response: data.response || 'I apologize, but I could not generate a response.',
+        call_info: data.call_info || null
+      };
     } catch (error) {
-      console.error('Groq API error:', error);
+      console.error('Backend API error:', error);
       throw error;
     }
   };
 
-  const speakWithDeepgram = async (text) => {
-    const apiKey = process.env.REACT_APP_DEEPGRAM_API_KEY;
-    
-    if (!apiKey || apiKey === 'your_deepgram_api_key_here' || apiKey.trim() === '') {
-      console.warn('⚠️ Deepgram API key not configured, falling back to browser speech synthesis');
-      addToLog('System', '⚠️ Deepgram TTS not configured. Using browser voice.', 'system');
-      return speakWithBrowserTTS(text);
+  const initiateCall = async () => {
+    if (!patientPhone.trim()) {
+      addToLog('System', 'Please enter a phone number to initiate the call.', 'system');
+      return;
     }
 
+    if (!callInfo) {
+      addToLog('System', 'No call information available.', 'system');
+      return;
+    }
+
+    setIsCalling(true);
+    addToLog('System', `Initiating call to ${patientPhone}...`, 'system');
+
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/twilio/initiate-call`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          phone_number: patientPhone.trim(),
+          intent: callInfo.intent,
+          patient_name: patientName.trim() || null,
+          appointment_date: callInfo.extracted_info?.dates_mentioned?.[0] || null
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        addToLog('System', `Call initiated successfully! Call SID: ${data.call_sid}`, 'system');
+        setShowCallModal(false);
+        setPatientPhone('');
+        setPatientName('');
+        setCallInfo(null);
+      } else {
+        addToLog('System', `Call failed: ${data.error}`, 'system');
+      }
+    } catch (error) {
+      console.error('Call initiation error:', error);
+      addToLog('System', `Error initiating call: ${error.message}`, 'system');
+    } finally {
+      setIsCalling(false);
+    }
+  };
+
+  const speakWithDeepgram = async (text) => {
     // Ensure user has interacted for audio autoplay (required by browsers)
     if (!userInteracted) {
       console.warn('⚠️ User has not interacted yet. Audio autoplay may be blocked by browser.');
       console.log('Attempting to enable user interaction...');
       setUserInteracted(true);
-      // Still try to play - some browsers allow it after setting the flag
     }
 
     try {
       setIsSpeaking(true);
-      console.log('🎙️ Generating speech with Deepgram TTS...');
+      console.log('🎙️ Generating speech with Deepgram TTS via backend...');
       console.log('Text to speak:', text.substring(0, 50) + '...');
 
-      // Deepgram TTS API endpoint with voice model
-      const response = await fetch('https://api.deepgram.com/v1/speak?model=aura-asteria-en', {
+      // Call backend TTS endpoint
+      const response = await fetch(`${BACKEND_URL}/api/tts`, {
         method: 'POST',
         headers: {
-          'Authorization': `Token ${apiKey}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -481,20 +715,20 @@ const DentalVoiceAI = () => {
       });
 
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Deepgram TTS API error:', response.status, response.statusText, errorText);
-        throw new Error(`Deepgram TTS API error: ${response.status} ${response.statusText}`);
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Backend TTS error: ${response.status} ${response.statusText}`);
       }
 
-      console.log('✅ Deepgram TTS response received');
-      const audioBlob = await response.blob();
-      console.log('Audio blob size:', audioBlob.size, 'bytes');
+      const data = await response.json();
       
-      if (audioBlob.size === 0) {
-        throw new Error('Empty audio blob received from Deepgram');
+      if (!data.success || !data.audio_url) {
+        throw new Error(data.error || 'Failed to get audio from backend');
       }
 
-      const audioUrl = URL.createObjectURL(audioBlob);
+      console.log('✅ Backend TTS response received');
+      
+      // Backend returns base64 data URL, use it directly
+      const audioUrl = data.audio_url;
       
       // Stop any existing audio
       if (audioRef.current) {
@@ -519,7 +753,10 @@ const DentalVoiceAI = () => {
         audio.onended = () => {
           console.log('✅ Deepgram speech completed successfully');
           setIsSpeaking(false);
-          URL.revokeObjectURL(audioUrl);
+          // Only revoke if it's a blob URL, not a data URL
+          if (audioUrl.startsWith('blob:')) {
+            URL.revokeObjectURL(audioUrl);
+          }
           audioRef.current = null;
           
           if (!isWakeWordModeRef.current) {
@@ -531,7 +768,10 @@ const DentalVoiceAI = () => {
         audio.onerror = (error) => {
           console.error('❌ Audio playback error:', error);
           setIsSpeaking(false);
-          URL.revokeObjectURL(audioUrl);
+          // Only revoke if it's a blob URL, not a data URL
+          if (audioUrl.startsWith('blob:')) {
+            URL.revokeObjectURL(audioUrl);
+          }
           audioRef.current = null;
           
           console.log('Falling back to browser TTS due to playback error');
@@ -549,7 +789,10 @@ const DentalVoiceAI = () => {
             .catch(error => {
               console.error('❌ Error playing Deepgram audio:', error);
               setIsSpeaking(false);
-              URL.revokeObjectURL(audioUrl);
+              // Only revoke if it's a blob URL, not a data URL
+              if (audioUrl.startsWith('blob:')) {
+                URL.revokeObjectURL(audioUrl);
+              }
               audioRef.current = null;
               
               console.log('Falling back to browser TTS due to play() error');
@@ -565,9 +808,9 @@ const DentalVoiceAI = () => {
       });
 
     } catch (error) {
-      console.error('❌ Deepgram TTS error:', error);
+      console.error('❌ Backend TTS error:', error);
       setIsSpeaking(false);
-      addToLog('System', `Deepgram TTS error: ${error.message}. Using browser voice.`, 'system');
+      addToLog('System', `Backend TTS error: ${error.message}. Using browser voice.`, 'system');
       return speakWithBrowserTTS(text);
     }
   };
@@ -615,6 +858,19 @@ const DentalVoiceAI = () => {
   const handleUserMessage = async (message) => {
     if (!message || message.trim() === '') return;
 
+    // Hide intro and move animation to background on first interaction
+    if (showIntro) {
+      setShowIntro(false);
+      setTimeout(() => {
+        setAnimationPosition('background');
+        setChatActive(true);
+      }, 100);
+    }
+
+    // Reset inactivity timer
+    lastInteractionRef.current = Date.now();
+    setShowTimeoutPopup(false);
+
     // Mark user as interacted (for audio autoplay)
     if (!userInteracted) {
       setUserInteracted(true);
@@ -640,7 +896,17 @@ const DentalVoiceAI = () => {
       
       setIsLoading(false);
       
-      await speakWithDeepgram(aiResponse);
+      // Check if call is required
+      if (aiResponse.call_info && aiResponse.call_info.requires_call) {
+        setCallInfo(aiResponse.call_info);
+        setShowCallModal(true);
+        // Pre-fill phone if extracted
+        if (aiResponse.call_info.extracted_info?.phone_number) {
+          setPatientPhone(aiResponse.call_info.extracted_info.phone_number);
+        }
+      }
+      
+      await speakWithDeepgram(aiResponse.response || aiResponse);
       
     } catch (error) {
       const errorMessage = error.message || 'Failed to get response from AI. Please try again.';
@@ -667,6 +933,19 @@ const DentalVoiceAI = () => {
       return;
     }
 
+    // Hide intro and move animation to background on first interaction
+    if (showIntroRef.current) {
+      setShowIntro(false);
+      setTimeout(() => {
+        setAnimationPosition('background');
+        setChatActive(true);
+      }, 100);
+    }
+
+    // Reset inactivity timer
+    lastInteractionRef.current = Date.now();
+    setShowTimeoutPopup(false);
+
     // Mark user as interacted
     if (!userInteracted) {
       setUserInteracted(true);
@@ -683,18 +962,76 @@ const DentalVoiceAI = () => {
     }
   };
 
+  const handleIntroSubmit = (e) => {
+    e.preventDefault();
+    if (inputMessage.trim()) {
+      handleUserMessage(inputMessage.trim());
+    }
+  };
+
   return (
     <div className="app-container">
-      <div className="chat-container">
-        <div className="chat-header">
-          <h1>Dental AI Assistant - Krish</h1>
-          <div className="status-indicator">
-            <div className={`status-dot ${isListening ? 'listening' : isWakeWordMode ? 'wake-word' : 'ready'}`}></div>
-            <span>
-              {isSpeaking ? '🔊 Speaking' : isListening ? 'Listening' : isWakeWordMode ? 'Waiting for "krish"' : 'Ready'}
-            </span>
+      {/* Background Image Animation */}
+      <div className={`image-animation-container theme-${theme} ${animationPosition}`}>
+        <img
+          src={imageSequence[currentImageIndex]}
+          alt="Animated background"
+          className="animated-image fade-in"
+          key={currentImageIndex}
+        />
+      </div>
+
+      {/* Theme Toggle Button */}
+      <button 
+        className="theme-toggle-button"
+        onClick={toggleTheme}
+        aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} theme`}
+        title={`Switch to ${theme === 'light' ? 'dark' : 'light'} theme`}
+      >
+        {theme === 'light' ? <Moon className="theme-icon" /> : <Sun className="theme-icon" />}
+      </button>
+
+      {/* Intro Page */}
+      {showIntro && (
+        <div className={`intro-page theme-${theme}`}>
+          <div className="intro-content">
+            {/* Centered animation during intro */}
+            <div className="intro-center-animation">
+              <img
+                src={imageSequence[currentImageIndex]}
+                alt="Premium animation"
+                className="intro-center-animated-image"
+                key={currentImageIndex}
+              />
+            </div>
+            
+            {/* Text below animation */}
+            <div className="intro-text">
+              <h2 className="intro-title">Say "Krish" to activate</h2>
+              <p className="intro-subtitle">Or type your message below</p>
+            </div>
+            
+            {/* Input form */}
+            <form onSubmit={handleIntroSubmit} className="intro-input-form">
+              <input
+                type="text"
+                className="intro-text-input"
+                placeholder="Type your message here..."
+                value={inputMessage}
+                onChange={(e) => setInputMessage(e.target.value)}
+                autoFocus
+              />
+              <button type="submit" className="intro-submit-button">
+                <Send className="icon" />
+              </button>
+            </form>
           </div>
         </div>
+      )}
+
+      {/* Chat Container - Hidden during intro */}
+      {!showIntro && (
+        <div className={`chat-container theme-${theme} ${chatActive ? 'active' : ''}`}>
 
         <div className="chat-messages">
           {conversationLog.length === 0 && (
@@ -727,6 +1064,81 @@ const DentalVoiceAI = () => {
           )}
           <div ref={chatEndRef} />
         </div>
+
+        {/* Timeout Popup */}
+        {showTimeoutPopup && (
+          <div className={`timeout-popup theme-${theme}`} onClick={() => setShowTimeoutPopup(false)}>
+            <div className={`timeout-popup-content theme-${theme}`} onClick={(e) => e.stopPropagation()}>
+              <div className="timeout-popup-icon">🎤</div>
+              <p className="timeout-popup-text">Say "Krish" to activate</p>
+              <button className="timeout-popup-close" onClick={() => setShowTimeoutPopup(false)}>×</button>
+            </div>
+          </div>
+        )}
+
+        {/* Call Modal */}
+        {showCallModal && callInfo && (
+          <div className={`call-modal theme-${theme}`} onClick={() => setShowCallModal(false)}>
+            <div className={`call-modal-content theme-${theme}`} onClick={(e) => e.stopPropagation()}>
+              <button className="call-modal-close" onClick={() => setShowCallModal(false)}>
+                <X className="icon" />
+              </button>
+              <div className="call-modal-header">
+                <Phone className="call-modal-icon" />
+                <h3 className="call-modal-title">
+                  {callInfo.intent === 'cancel' ? 'Cancel Appointment' : 'Reschedule Appointment'}
+                </h3>
+                <p className="call-modal-subtitle">
+                  We'll call the patient to {callInfo.intent === 'cancel' ? 'confirm cancellation' : 'find a better time'}.
+                </p>
+              </div>
+              <div className="call-modal-form">
+                <div className="call-modal-field">
+                  <label className="call-modal-label">Patient Phone Number *</label>
+                  <input
+                    type="tel"
+                    className="call-modal-input"
+                    placeholder="+1234567890"
+                    value={patientPhone}
+                    onChange={(e) => setPatientPhone(e.target.value)}
+                    autoFocus
+                  />
+                </div>
+                <div className="call-modal-field">
+                  <label className="call-modal-label">Patient Name (Optional)</label>
+                  <input
+                    type="text"
+                    className="call-modal-input"
+                    placeholder="John Doe"
+                    value={patientName}
+                    onChange={(e) => setPatientName(e.target.value)}
+                  />
+                </div>
+                <div className="call-modal-actions">
+                  <button
+                    className="call-modal-cancel"
+                    onClick={() => {
+                      setShowCallModal(false);
+                      setPatientPhone('');
+                      setPatientName('');
+                      setCallInfo(null);
+                    }}
+                    disabled={isCalling}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    className="call-modal-submit"
+                    onClick={initiateCall}
+                    disabled={!patientPhone.trim() || isCalling}
+                  >
+                    {isCalling ? 'Calling...' : 'Initiate Call'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="chat-input-area">
           {transcript && (
@@ -781,7 +1193,8 @@ const DentalVoiceAI = () => {
             </div>
           )}
         </div>
-      </div>
+        </div>
+      )}
     </div>
   );
 };

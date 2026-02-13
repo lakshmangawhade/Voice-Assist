@@ -1,49 +1,127 @@
-# Dental AI Assistant - Krish
+# Dental Voice AI Assistant - Krish
 
-A voice-activated AI assistant for dental practices powered by Groq's Llama 3.1 8B Instant model and Deepgram for high-accuracy speech recognition.
+A voice-activated AI assistant for dental practices with separate Python backend and React frontend. Powered by Groq's Llama 3.1 8B Instant model and Deepgram for high-quality text-to-speech.
+
+## Architecture
+
+- **Frontend**: React application with voice recognition and UI
+- **Backend**: Python FastAPI server handling LLM (Groq) and TTS (Deepgram) API calls
+- **Security**: API keys stored securely on backend, not exposed to frontend
+
+## Project Structure
+
+```
+Voice-Assist/
+├── backend/                 # Python FastAPI backend
+│   ├── main.py             # FastAPI application entry point
+│   ├── app/
+│   │   └── services/
+│   │       ├── llm_service.py    # Groq LLM service
+│   │       └── tts_service.py   # Deepgram TTS service
+│   ├── requirements.txt    # Python dependencies
+│   └── .env.example        # Backend environment variables template
+├── src/                    # React frontend
+│   ├── App.js              # Main React component
+│   ├── App.css             # Styles
+│   └── assets/             # Image assets
+├── package.json            # Frontend dependencies
+└── .env.example            # Frontend environment variables template
+```
+
+## Setup Instructions
+
+### Backend Setup
+
+1. **Navigate to backend directory:**
+   ```bash
+   cd backend
+   ```
+
+2. **Install Python dependencies:**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. **Configure environment variables:**
+   ```bash
+   cp .env.example .env
+   ```
+   
+   Edit `.env` and add your API keys:
+   ```env
+   GROQ_API_KEY=your_groq_api_key_here
+   DEEPGRAM_API_KEY=your_deepgram_api_key_here
+   ```
+
+4. **Start the backend server:**
+   ```bash
+   python main.py
+   ```
+   
+   Or using uvicorn:
+   ```bash
+   uvicorn main:app --reload --host 0.0.0.0 --port 8000
+   ```
+   
+   Backend will run on `http://localhost:8000`
+
+### Frontend Setup
+
+1. **Install dependencies:**
+   ```bash
+   npm install
+   ```
+
+2. **Configure environment variables:**
+   ```bash
+   cp .env.example .env
+   ```
+   
+   Edit `.env`:
+   ```env
+   REACT_APP_BACKEND_URL=http://localhost:8000
+   ```
+
+3. **Start the frontend:**
+   ```bash
+   npm start
+   ```
+   
+   Frontend will run on `http://localhost:3000`
 
 ## Features
 
 - 🎤 **Wake Word Detection**: Say "krish" to activate voice commands
-- 🎯 **Deepgram Voice Recognition**: High-accuracy speech-to-text using Deepgram
+- 🎯 **Voice Recognition**: Browser-based speech-to-text
 - 💬 **Text & Voice Chat**: Interact via text input or voice commands
-- 🤖 **AI-Powered**: Powered by Groq's Llama 3.1 8B Instant model
-- 🔊 **Text-to-Speech**: AI responses are spoken aloud
+- 🤖 **AI-Powered**: Powered by Groq's Llama 3.1 8B Instant model (via backend)
+- 🔊 **Text-to-Speech**: AI responses spoken via Deepgram TTS (via backend)
 - ⏱️ **Continuous Listening**: Mic stays open for 5 seconds after AI response
-- 🔒 **Secure**: API keys stored in environment variables
+- 🔒 **Secure**: API keys stored on backend, never exposed to frontend
+- 🖼️ **Animated Background**: 24fps image animation
 
-## Setup Instructions
+## API Endpoints
 
-### 1. Install Dependencies
+### Backend Endpoints
 
-```bash
-npm install
-```
-
-### 2. Configure API Keys
-
-1. Get your API keys:
-   - **Groq API Key**: [Groq Console](https://console.groq.com/)
-   - **Deepgram API Key**: [Deepgram Console](https://console.deepgram.com/)
-
-2. Create a `.env` file in the root directory (same level as `package.json`)
-
-3. Add your API keys:
-
-```env
-REACT_APP_GROQ_API_KEY=your_groq_api_key_here
-REACT_APP_DEEPGRAM_API_KEY=your_deepgram_api_key_here
-```
-
-**Important**: Replace the placeholder values with your actual API keys.
-
-### 3. Start the Application
-
-```bash
-npm start
-```
-
-The app will open at [http://localhost:3000](http://localhost:3000)
+- `GET /` - Root endpoint
+- `GET /health` - Health check with service status
+- `POST /api/chat` - Get AI response
+  ```json
+  {
+    "message": "User message",
+    "conversation_history": [
+      {"role": "user", "content": "Previous message"},
+      {"role": "assistant", "content": "AI response"}
+    ]
+  }
+  ```
+- `POST /api/tts` - Convert text to speech
+  ```json
+  {
+    "text": "Text to convert to speech"
+  }
+  ```
 
 ## Usage
 
@@ -67,77 +145,65 @@ The app will open at [http://localhost:3000](http://localhost:3000)
 
 ## Security Notes
 
-- The `.env` file is already added to `.gitignore` to prevent committing your API key
-- Never commit your API key to version control
-- API calls are made directly from the browser (client-side)
+- API keys are stored on the backend only, never exposed to the frontend
+- Backend validates and sanitizes all inputs
+- CORS configured to only allow requests from frontend origin
+- Environment variables should never be committed to version control
+
+## Future Enhancements
+
+The project structure is designed to easily add:
+- Database integration for schedules and appointments
+- User authentication
+- Session management
+- Appointment booking functionality
+
+## Development
+
+### Running Both Services
+
+**Terminal 1 (Backend):**
+```bash
+cd backend
+python main.py
+```
+
+**Terminal 2 (Frontend):**
+```bash
+npm start
+```
+
+### Backend Development
+
+- Uses FastAPI for async API handling
+- Environment variables loaded via python-dotenv
+- CORS configured for frontend communication
+- Error handling and validation included
+
+### Frontend Development
+
+- React with hooks for state management
+- Browser Speech Recognition API for voice input
+- Fetches audio from backend and plays in browser
+- Fallback to browser TTS if backend TTS fails
+
+## Troubleshooting
+
+### Backend not connecting
+- Ensure backend is running on port 8000
+- Check `REACT_APP_BACKEND_URL` in frontend `.env`
+- Verify CORS settings in `backend/main.py`
+
+### API errors
+- Check backend `.env` file has correct API keys
+- Verify API keys are valid and have credits
+- Check backend logs for detailed error messages
+
+### Audio playback issues
+- Ensure user has interacted with page (clicked/tapped)
+- Check browser console for audio errors
+- Browser TTS will be used as fallback automatically
 
 ---
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
-
-## Available Scripts
-
-In the project directory, you can run:
-
-### `npm start`
-
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
-
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
-
-### `npm test`
-
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
-
-### `npm run build`
-
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
-
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
-
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
-
-### `npm run eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
-
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
-
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+This project uses [Create React App](https://github.com/facebook/create-react-app) for the frontend and [FastAPI](https://fastapi.tiangolo.com/) for the backend.
