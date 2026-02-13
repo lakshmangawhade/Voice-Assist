@@ -892,7 +892,8 @@ const DentalVoiceAI = () => {
       }];
       
       const aiResponse = await callGroqAPI(message, currentLog);
-      addToLog('Krish', aiResponse, 'ai');
+      const responseText = aiResponse.response || '';
+      addToLog('Krish', responseText, 'ai');
       
       setIsLoading(false);
       
@@ -906,7 +907,7 @@ const DentalVoiceAI = () => {
         }
       }
       
-      await speakWithDeepgram(aiResponse.response || aiResponse);
+      await speakWithDeepgram(responseText);
       
     } catch (error) {
       const errorMessage = error.message || 'Failed to get response from AI. Please try again.';
