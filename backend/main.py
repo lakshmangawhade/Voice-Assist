@@ -15,6 +15,8 @@ from app.services.llm_service import LLMService
 from app.services.tts_service import TTSService
 from app.services.intent_service import IntentService
 from app.services.twilio_service import TwilioService
+from app.services.database_service import DatabaseService
+from app.services.query_service import QueryService
 from twilio.twiml.voice_response import VoiceResponse
 
 # Load environment variables
@@ -48,6 +50,16 @@ llm_service = LLMService()
 tts_service = TTSService()
 intent_service = IntentService()
 twilio_service = TwilioService()
+
+# Initialize database and query services
+db_service = DatabaseService()
+db_initialized = db_service.initialize_database()
+query_service = QueryService(db_service) if db_initialized else None
+
+if db_initialized:
+    print("Database initialized successfully. Query service available.")
+else:
+    print("Warning: Database initialization failed. Query service unavailable.")
 
 
 # Request/Response models
@@ -108,7 +120,8 @@ async def health_check():
         "status": "healthy",
         "llm_configured": llm_service.is_configured(),
         "tts_configured": tts_service.is_configured(),
-        "twilio_configured": twilio_service.is_configured()
+        "twilio_configured": twilio_service.is_configured(),
+        "database_initialized": db_initialized
     }
 
 
@@ -122,9 +135,15 @@ async def chat(request: ChatRequest):
         if not request.message or not request.message.strip():
             raise HTTPException(status_code=400, detail="Message cannot be empty")
         
+        # Get provider number from request if available (for doctor-specific queries)
+        # For now, we'll use None (all appointments) or you can add prov_num to ChatRequest
+        prov_num = None  # TODO: Extract from request if needed
+        
         response_text = await llm_service.get_response(
             user_message=request.message,
-            conversation_history=request.conversation_history
+            conversation_history=request.conversation_history,
+            query_service=query_service,
+            prov_num=prov_num
         )
         
         # Detect intent

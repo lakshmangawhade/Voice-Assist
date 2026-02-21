@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Mic, MicOff, Send, Sun, Moon, Phone, X } from 'lucide-react';
 import './App.css';
+import profilePhoto from './assets/chat/profile_photo.jpg';
 
 // Import light theme images
 import light_tooth1_1 from './assets/light/tooth1_1.png';
@@ -89,6 +90,8 @@ const DentalVoiceAI = () => {
   const [animationPosition, setAnimationPosition] = useState('center'); // 'center' or 'background'
   const [showTimeoutPopup, setShowTimeoutPopup] = useState(false);
   const [chatActive, setChatActive] = useState(false);
+  const [waitingForFirstResponse, setWaitingForFirstResponse] = useState(false);
+  const [introMessages, setIntroMessages] = useState([]);
   const [showCallModal, setShowCallModal] = useState(false);
   const [callInfo, setCallInfo] = useState(null);
   const [patientPhone, setPatientPhone] = useState('');
@@ -332,7 +335,7 @@ const DentalVoiceAI = () => {
       stopCommandRecognition();
       setIsWakeWordMode(true);
       setTimeout(() => startWakeWordDetection(), 300);
-      addToLog('System', 'Returning to wake word mode. Say "krish" to continue.', 'system');
+      //addToLog('System', 'Returning to wake word mode. Say "krish" to continue.', 'system');
     }, SILENCE_TIMEOUT);
   };
 
@@ -858,19 +861,6 @@ const DentalVoiceAI = () => {
   const handleUserMessage = async (message) => {
     if (!message || message.trim() === '') return;
 
-    // Hide intro and move animation to background on first interaction
-    if (showIntro) {
-      setShowIntro(false);
-      setTimeout(() => {
-        setAnimationPosition('background');
-        setChatActive(true);
-      }, 100);
-    }
-
-    // Reset inactivity timer
-    lastInteractionRef.current = Date.now();
-    setShowTimeoutPopup(false);
-
     // Mark user as interacted (for audio autoplay)
     if (!userInteracted) {
       setUserInteracted(true);
@@ -878,7 +868,26 @@ const DentalVoiceAI = () => {
 
     clearSilenceTimeout();
 
-    addToLog('You', message, 'user');
+    // Reset inactivity timer
+    lastInteractionRef.current = Date.now();
+    setShowTimeoutPopup(false);
+
+    const isFirstMessage = showIntro && conversationLog.length === 0;
+    const userMessageLog = {
+      speaker: 'You',
+      message,
+      type: 'user',
+      timestamp: new Date().toLocaleTimeString()
+    };
+    
+    if (isFirstMessage) {
+      // Add message to intro messages
+      setIntroMessages([userMessageLog]);
+      setWaitingForFirstResponse(true);
+    } else {
+      addToLog('You', message, 'user');
+    }
+
     setTranscript('');
     setInputMessage('');
     setIsLoading(true);
@@ -893,7 +902,36 @@ const DentalVoiceAI = () => {
       
       const aiResponse = await callGroqAPI(message, currentLog);
       const responseText = aiResponse.response || '';
-      addToLog('Krish', responseText, 'ai');
+      
+      if (isFirstMessage) {
+        // Add AI response to intro messages
+        const aiMessageLog = {
+          speaker: 'Krish',
+          message: responseText,
+          type: 'ai',
+          timestamp: new Date().toLocaleTimeString()
+        };
+        const updatedIntroMessages = [userMessageLog, aiMessageLog];
+        
+        // Update intro messages state
+        setIntroMessages(updatedIntroMessages);
+        
+        // Wait a moment for message to render, then transition
+        setTimeout(() => {
+          // Move animation to background with smooth enlargement
+          setAnimationPosition('background');
+          setTimeout(() => {
+            setShowIntro(false);
+            setChatActive(true);
+            // Move intro messages to conversation log
+            setConversationLog(updatedIntroMessages);
+            setIntroMessages([]);
+            setWaitingForFirstResponse(false);
+          }, 300);
+        }, 500);
+      } else {
+        addToLog('Krish', responseText, 'ai');
+      }
       
       setIsLoading(false);
       
@@ -911,7 +949,17 @@ const DentalVoiceAI = () => {
       
     } catch (error) {
       const errorMessage = error.message || 'Failed to get response from AI. Please try again.';
-      addToLog('System', `Error: ${errorMessage}`, 'system');
+      if (isFirstMessage) {
+        setIntroMessages(prev => [...prev, {
+          speaker: 'System',
+          message: `Error: ${errorMessage}`,
+          type: 'system',
+          timestamp: new Date().toLocaleTimeString()
+        }]);
+        setWaitingForFirstResponse(false);
+      } else {
+        addToLog('System', `Error: ${errorMessage}`, 'system');
+      }
       console.error('Error handling user message:', error);
       setIsLoading(false);
       
@@ -934,14 +982,8 @@ const DentalVoiceAI = () => {
       return;
     }
 
-    // Hide intro and move animation to background on first interaction
-    if (showIntroRef.current) {
-      setShowIntro(false);
-      setTimeout(() => {
-        setAnimationPosition('background');
-        setChatActive(true);
-      }, 100);
-    }
+    // Don't hide intro immediately - wait for first response
+    // This is handled in handleUserMessage
 
     // Reset inactivity timer
     lastInteractionRef.current = Date.now();
@@ -997,20 +1039,62 @@ const DentalVoiceAI = () => {
         <div className={`intro-page theme-${theme}`}>
           <div className="intro-content">
             {/* Centered animation during intro */}
-            <div className="intro-center-animation">
-              <img
-                src={imageSequence[currentImageIndex]}
-                alt="Premium animation"
-                className="intro-center-animated-image"
-                key={currentImageIndex}
-              />
-            </div>
+            {introMessages.length === 0 && (
+              <div className="intro-center-animation">
+                <img
+                  src={imageSequence[currentImageIndex]}
+                  alt="Premium animation"
+                  className="intro-center-animated-image"
+                  key={currentImageIndex}
+                />
+              </div>
+            )}
             
-            {/* Text below animation */}
-            <div className="intro-text">
-              <h2 className="intro-title">Say "Krish" to activate</h2>
-              <p className="intro-subtitle">Or type your message below</p>
-            </div>
+            {/* Text below animation - only show if no messages */}
+            {introMessages.length === 0 && (
+              <div className="intro-text">
+                <h2 className="intro-title">Say "Krish" to activate</h2>
+                <p className="intro-subtitle">Or type your message below</p>
+              </div>
+            )}
+            
+            {/* Messages area - show when messages exist */}
+            {introMessages.length > 0 && (
+              <div className="intro-messages-container">
+                {introMessages.map((log, index) => (
+                  <div key={index} className={`intro-message-wrapper ${log.type}`}>
+                    {log.type === 'ai' && (
+                      <img 
+                        src={profilePhoto} 
+                        alt="Krish" 
+                        className="intro-profile-photo"
+                      />
+                    )}
+                    <div className={`intro-message ${log.type}`}>
+                      <div className="intro-message-header">
+                        <span className="intro-message-speaker">{log.speaker}</span>
+                        <span className="intro-message-time">{log.timestamp}</span>
+                      </div>
+                      <div className="intro-message-content">{log.message}</div>
+                    </div>
+                  </div>
+                ))}
+                {isLoading && (
+                  <div className="intro-message-wrapper ai">
+                    <img 
+                      src={profilePhoto} 
+                      alt="Krish" 
+                      className="intro-profile-photo"
+                    />
+                    <div className="intro-message ai">
+                      <div className="intro-message-content">
+                        <span className="typing-indicator">Krish is thinking...</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
             
             {/* Input form */}
             <form onSubmit={handleIntroSubmit} className="intro-input-form">
@@ -1021,8 +1105,13 @@ const DentalVoiceAI = () => {
                 value={inputMessage}
                 onChange={(e) => setInputMessage(e.target.value)}
                 autoFocus
+                disabled={waitingForFirstResponse}
               />
-              <button type="submit" className="intro-submit-button">
+              <button 
+                type="submit" 
+                className="intro-submit-button"
+                disabled={waitingForFirstResponse || !inputMessage.trim()}
+              >
                 <Send className="icon" />
               </button>
             </form>
@@ -1045,6 +1134,13 @@ const DentalVoiceAI = () => {
           
           {conversationLog.map((log, index) => (
             <div key={index} className={`message-wrapper ${log.type}`}>
+              {log.type === 'ai' && (
+                <img 
+                  src={profilePhoto} 
+                  alt="Krish" 
+                  className="message-profile-photo"
+                />
+              )}
               <div className={`message ${log.type}`}>
                 <div className="message-header">
                   <span className="message-speaker">{log.speaker}</span>
@@ -1056,6 +1152,11 @@ const DentalVoiceAI = () => {
           ))}
           {isLoading && (
             <div className="message-wrapper ai">
+              <img 
+                src={profilePhoto} 
+                alt="Krish" 
+                className="message-profile-photo"
+              />
               <div className="message ai">
                 <div className="message-content">
                   <span className="typing-indicator">Krish is thinking...</span>
@@ -1066,13 +1167,11 @@ const DentalVoiceAI = () => {
           <div ref={chatEndRef} />
         </div>
 
-        {/* Timeout Popup */}
+        {/* Timeout Popup - positioned above mic button */}
         {showTimeoutPopup && (
-          <div className={`timeout-popup theme-${theme}`} onClick={() => setShowTimeoutPopup(false)}>
-            <div className={`timeout-popup-content theme-${theme}`} onClick={(e) => e.stopPropagation()}>
-              <div className="timeout-popup-icon">🎤</div>
+          <div className={`timeout-popup theme-${theme}`}>
+            <div className={`timeout-popup-content theme-${theme}`}>
               <p className="timeout-popup-text">Say "Krish" to activate</p>
-              <button className="timeout-popup-close" onClick={() => setShowTimeoutPopup(false)}>×</button>
             </div>
           </div>
         )}
@@ -1188,11 +1287,7 @@ const DentalVoiceAI = () => {
             </div>
           </form>
           
-          {isWakeWordMode && (
-            <div className="wake-word-hint">
-              <span className="wake-word-text">💡 Say "{WAKE_WORD}" to activate voice commands</span>
-            </div>
-          )}
+          
         </div>
         </div>
       )}
