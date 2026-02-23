@@ -53,13 +53,13 @@ twilio_service = TwilioService()
 
 # Initialize database and query services
 db_service = DatabaseService()
-db_initialized = db_service.initialize_database()
+db_initialized = db_service.initialize()  # Use initialize() method
 query_service = QueryService(db_service) if db_initialized else None
 
 if db_initialized:
-    print("Database initialized successfully. Query service available.")
+    print("✓ Database initialized successfully. Query service available.")
 else:
-    print("Warning: Database initialization failed. Query service unavailable.")
+    print("⚠ Warning: Database initialization failed. Query service unavailable.")
 
 
 # Request/Response models
@@ -164,10 +164,11 @@ async def chat(request: ChatRequest):
             call_info=call_info
         )
     except Exception as e:
+        error_message = str(e) if str(e) else "An error occurred while processing your request."
         return ChatResponse(
-            response="",
+            response=f"I apologize, but I encountered an error: {error_message}. Please try again.",
             success=False,
-            error=str(e)
+            error=error_message
         )
 
 

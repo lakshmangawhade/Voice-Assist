@@ -631,18 +631,20 @@ const DentalVoiceAI = () => {
 
       const data = await response.json();
       
-      if (!data.success) {
-        throw new Error(data.error || 'Failed to get response from backend');
-      }
-
-      // Return both response and call_info
+      // Return response even if not successful - let UI handle it
       return {
-        response: data.response || 'I apologize, but I could not generate a response.',
-        call_info: data.call_info || null
+        response: data.response || data.error || 'I apologize, but I could not generate a response.',
+        call_info: data.call_info || null,
+        success: data.success !== false  // Default to true if not specified
       };
     } catch (error) {
       console.error('Backend API error:', error);
-      throw error;
+      // Return error response instead of throwing - allows UI to transition
+      return {
+        response: error.message || 'I apologize, but I encountered an error. Please try again.',
+        call_info: null,
+        success: false
+      };
     }
   };
 
@@ -901,7 +903,7 @@ const DentalVoiceAI = () => {
       }];
       
       const aiResponse = await callGroqAPI(message, currentLog);
-      const responseText = aiResponse.response || '';
+      const responseText = aiResponse.response || 'I apologize, but I could not generate a response.';
       
       if (isFirstMessage) {
         // Add AI response to intro messages
@@ -916,7 +918,7 @@ const DentalVoiceAI = () => {
         // Update intro messages state
         setIntroMessages(updatedIntroMessages);
         
-        // Wait a moment for message to render, then transition
+        // Always transition after first message - wait for message to render
         setTimeout(() => {
           // Move animation to background with smooth enlargement
           setAnimationPosition('background');
@@ -927,13 +929,13 @@ const DentalVoiceAI = () => {
             setConversationLog(updatedIntroMessages);
             setIntroMessages([]);
             setWaitingForFirstResponse(false);
+            setIsLoading(false);
           }, 300);
         }, 500);
       } else {
         addToLog('Krish', responseText, 'ai');
+        setIsLoading(false);
       }
-      
-      setIsLoading(false);
       
       // Check if call is required
       if (aiResponse.call_info && aiResponse.call_info.requires_call) {
@@ -945,23 +947,48 @@ const DentalVoiceAI = () => {
         }
       }
       
-      await speakWithDeepgram(responseText);
+      // Only speak if we have a valid response and not transitioning
+      if (responseText && !isFirstMessage) {
+        await speakWithDeepgram(responseText);
+      } else if (responseText && isFirstMessage) {
+        // For first message, wait for transition then speak
+        setTimeout(async () => {
+          await speakWithDeepgram(responseText);
+        }, 1000);
+      }
       
     } catch (error) {
       const errorMessage = error.message || 'Failed to get response from AI. Please try again.';
+      
       if (isFirstMessage) {
-        setIntroMessages(prev => [...prev, {
+        // Even on error, transition to chat page
+        const errorMessageLog = {
           speaker: 'System',
           message: `Error: ${errorMessage}`,
           type: 'system',
           timestamp: new Date().toLocaleTimeString()
-        }]);
-        setWaitingForFirstResponse(false);
+        };
+        const updatedIntroMessages = [userMessageLog, errorMessageLog];
+        setIntroMessages(updatedIntroMessages);
+        
+        // Transition even on error
+        setTimeout(() => {
+          setAnimationPosition('background');
+          setTimeout(() => {
+            setShowIntro(false);
+            setChatActive(true);
+            setConversationLog(updatedIntroMessages);
+            setIntroMessages([]);
+            setWaitingForFirstResponse(false);
+            setIsLoading(false);
+          }, 300);
+        }, 500);
       } else {
         addToLog('System', `Error: ${errorMessage}`, 'system');
+        setIsLoading(false);
       }
+      
       console.error('Error handling user message:', error);
-      setIsLoading(false);
       
       if (!isWakeWordModeRef.current) {
         startSilenceTimer();

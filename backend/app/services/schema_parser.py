@@ -208,3 +208,4 @@ class SchemaParser:
         return self.table_schemas.get(table_name.lower())
 
 
+

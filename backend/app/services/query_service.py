@@ -17,7 +17,8 @@ class QueryService:
     
     def analyze_and_query(self, user_message: str, prov_num: Optional[int] = None) -> Dict[str, Any]:
         """
-        Analyze user message and fetch relevant data
+        Analyze user message and fetch relevant data from database
+        Dynamically determines which table to query based on user question
         
         Args:
             user_message: User's question
@@ -28,30 +29,27 @@ class QueryService:
         """
         message_lower = user_message.lower()
         
+        # Get available tables
+        tables = self.db_service.get_tables()
+        table_set = {t.lower() for t in tables}
+        
         # Check for schedule/appointment queries
         if any(keyword in message_lower for keyword in ['schedule', 'appointment', 'appointments', 'today', 'tomorrow', 'week']):
-            return self._handle_schedule_query(user_message, message_lower, prov_num)
+            if 'appointment' in table_set:
+                return self._handle_schedule_query(user_message, message_lower, prov_num)
         
         # Check for patient queries
         elif any(keyword in message_lower for keyword in ['patient', 'patients', 'who is', 'find patient']):
-            return self._handle_patient_query(user_message, message_lower)
+            if 'patient' in table_set:
+                return self._handle_patient_query(user_message, message_lower)
         
         # Check for provider queries
         elif any(keyword in message_lower for keyword in ['provider', 'doctor', 'who am i', 'my info']):
-            return self._handle_provider_query(prov_num)
+            if 'provider' in table_set:
+                return self._handle_provider_query(prov_num)
         
-        # Check for ICD9 queries (more specific patterns first)
-        elif any(keyword in message_lower for keyword in ['icd9', 'icd-9', 'icd code', 'diagnosis code']) or \
-             (re.search(r'\b\d{3}(?:\.\d+)?\b', user_message) and any(kw in message_lower for kw in ['code', 'icd'])):
-            return self._handle_icd9_query(user_message, message_lower)
-        
-        # Default: no data needed
-        return {
-            'query_type': 'none',
-            'data': None,
-            'formatted_data': None,
-            'needs_data': False
-        }
+        # Generic table search - try to find relevant table based on keywords
+        return self._handle_generic_query(user_message, message_lower, tables)
     
     def _handle_schedule_query(self, user_message: str, message_lower: str, prov_num: Optional[int]) -> Dict[str, Any]:
         """Handle schedule/appointment related queries"""
@@ -73,14 +71,14 @@ class QueryService:
             appointments = self.db_service.get_appointments_today(prov_num)
             time_range = "today"
         
-        # Format data for LLM
+        # Format data for LLM - always provide context even if empty
         formatted_data = self._format_appointments(appointments, time_range)
         
         return {
             'query_type': 'appointments',
             'data': appointments,
             'formatted_data': formatted_data,
-            'needs_data': True,
+            'needs_data': True,  # Always True for data queries, even if empty
             'time_range': time_range
         }
     
@@ -117,7 +115,7 @@ class QueryService:
             'query_type': 'patients',
             'data': patients,
             'formatted_data': formatted_data,
-            'needs_data': True
+            'needs_data': True  # Always True for data queries, even if empty
         }
     
     def _handle_provider_query(self, prov_num: Optional[int]) -> Dict[str, Any]:
@@ -130,7 +128,7 @@ class QueryService:
             'query_type': 'providers',
             'data': providers,
             'formatted_data': formatted_data,
-            'needs_data': True
+            'needs_data': True  # Always True for data queries, even if empty
         }
     
     def _format_appointments(self, appointments: List[Dict], time_range: str) -> str:
@@ -207,101 +205,217 @@ class QueryService:
         
         return formatted
     
-    def _handle_icd9_query(self, user_message: str, message_lower: str) -> Dict[str, Any]:
-        """Handle ICD9-related queries"""
-        # Extract ICD9 code (e.g., "001", "001.0", "ICD9 001")
-        code_pattern = r'\b(\d{3}(?:\.\d+)?)\b'
-        code_match = re.search(code_pattern, user_message)
-        icd9_code = code_match.group(1) if code_match else None
+    def _handle_generic_query(self, user_message: str, message_lower: str, tables: List[str]) -> Dict[str, Any]:
+        """
+        Handle generic queries by searching across all tables
+        Tries to match user question to available tables and columns
+        """
+        # Extract potential table names from user message
+        # Look for table names that might be mentioned
+        table_keywords = {
+            'appointment': ['appointment', 'schedule', 'booking'],
+            'patient': ['patient', 'person', 'client'],
+            'provider': ['provider', 'doctor', 'dentist'],
+            'icd9': ['icd9', 'icd-9', 'diagnosis', 'code'],
+            'procedure': ['procedure', 'treatment', 'service'],
+            'procedurecode': ['procedure code', 'treatment code'],
+            'claimproc': ['claimproc', 'claim procedure', 'claim proc'],
+            'claim': ['claim', 'insurance', 'billing'],
+            'payment': ['payment', 'transaction', 'charge'],
+        }
         
-        # Extract ICD9 number
-        num_pattern = r'\bicd9\s*num(?:ber)?\s*:?\s*(\d+)\b|\bid\s*:?\s*(\d{4,})\b'
-        num_match = re.search(num_pattern, message_lower)
-        icd9_num = None
-        if num_match:
-            icd9_num = int(num_match.group(1) or num_match.group(2)) if (num_match.group(1) or num_match.group(2)) else None
-        
-        # Extract date
-        date_patterns = [
-            r'\b(\d{4}-\d{2}-\d{2})\b',  # YYYY-MM-DD
-            r'\b(\d{1,2}[/-]\d{1,2}[/-]\d{2,4})\b',  # MM/DD/YYYY
-            r'\b(january|february|march|april|may|june|july|august|september|october|november|december)\s+(\d{1,2}),?\s+(\d{4})\b',
-        ]
-        
-        date_str = None
-        for pattern in date_patterns:
-            match = re.search(pattern, message_lower, re.IGNORECASE)
-            if match:
-                if len(match.groups()) == 1:
-                    date_str = match.group(1)
-                elif len(match.groups()) == 3:
-                    # Month name format
-                    month_name = match.group(1).lower()
-                    day = match.group(2)
-                    year = match.group(3)
-                    months = ['january', 'february', 'march', 'april', 'may', 'june',
-                             'july', 'august', 'september', 'october', 'november', 'december']
-                    month_num = str(months.index(month_name) + 1).zfill(2)
-                    date_str = f"{year}-{month_num}-{day.zfill(2)}"
+        # Direct table-name mention has highest priority
+        matched_table = None
+        # Sort by length desc so claimproc matches before claim
+        for table_name in sorted(tables, key=lambda t: len(t), reverse=True):
+            if re.search(rf'\b{re.escape(table_name.lower())}\b', message_lower):
+                matched_table = table_name
                 break
+
+        # Find matching table by keyword map
+        for table_name, keywords in table_keywords.items():
+            if matched_table:
+                break
+            if table_name in {t.lower() for t in tables}:
+                if any(kw in message_lower for kw in keywords):
+                    matched_table = next((t for t in tables if t.lower() == table_name), table_name)
+                    break
         
-        # Extract description keywords
-        description_keywords = []
-        if any(kw in message_lower for kw in ['description', 'what is', 'tell me about', 'search for', 'find']):
-            # Try to extract description search terms after keywords
-            desc_pattern = r'(?:description|what is|tell me about|search for|find).*?["\']?([^"\']+)["\']?'
-            desc_match = re.search(desc_pattern, message_lower)
-            if desc_match:
-                desc_text = desc_match.group(1).strip()
-                # Remove common words
-                desc_text = re.sub(r'\b(icd9|icd-9|code|for|the|a|an)\b', '', desc_text, flags=re.IGNORECASE).strip()
-                if desc_text:
-                    description_keywords.append(desc_text)
+        # If no specific match, try to search in common tables
+        if not matched_table:
+            # Try searching in tables that might contain the answer
+            preferred = {'icd9', 'procedurecode', 'procedure', 'claim', 'payment', 'appointment', 'patient', 'provider'}
+            search_tables = [t for t in tables if t.lower() in preferred]
+            if search_tables:
+                matched_table = search_tables[0]  # Use first available
         
-        # Query database efficiently
-        icd9_records = self.db_service.search_icd9(
-            code=icd9_code,
-            description=description_keywords[0] if description_keywords else None,
-            date=date_str,
-            icd9_num=icd9_num,
-            limit=20
-        )
+        if not matched_table:
+            return {
+                'query_type': 'none',
+                'data': None,
+                'formatted_data': None,
+                'needs_data': False
+            }
         
-        formatted_data = self._format_icd9(icd9_records)
+        # Get table schema to find searchable columns
+        schema = self.db_service.get_table_schema(matched_table)
+        if not schema:
+            return {
+                'query_type': 'none',
+                'data': None,
+                'formatted_data': None,
+                'needs_data': False
+            }
+        
+        # Find text/searchable columns (usually varchar, text, char types)
+        text_columns = [col for col, col_type in schema.items() 
+                       if any(t in col_type.lower() for t in ['varchar', 'text', 'char', 'string'])]
+        
+        # Find numeric/ID columns
+        id_columns = [col for col in schema.keys() 
+                      if any(kw in col.lower() for kw in ['id', 'num', 'code', 'key'])]
+
+        # Extract explicit requested columns from the question
+        requested_columns = [
+            col for col in schema.keys()
+            if re.search(rf'\b{re.escape(col.lower())}\b', message_lower)
+        ]
+
+        # Extract explicit filters like "PatNum 4895" or "PatNum=4895"
+        where_parts: List[str] = []
+        where_params: List[Any] = []
+        for col in schema.keys():
+            # numeric equality pattern
+            num_match = re.search(rf'\b{re.escape(col.lower())}\b\s*(?:=|:)?\s*(\d+)\b', message_lower)
+            if num_match:
+                where_parts.append(f"`{col}` = %s")
+                where_params.append(int(num_match.group(1)))
+                continue
+            # quoted text equality pattern
+            txt_match = re.search(rf'\b{re.escape(col.lower())}\b\s*(?:=|:)?\s*[\"\']([^\"\']+)[\"\']', user_message, re.IGNORECASE)
+            if txt_match:
+                where_parts.append(f"`{col}` = %s")
+                where_params.append(txt_match.group(1).strip())
+        
+        # Extract search terms from user message
+        search_terms = self._extract_search_terms(user_message, message_lower)
+        
+        # Try to query the table
+        results = []
+        if where_parts:
+            # explicit structured query path
+            results = self.db_service.query_table(
+                table_name=matched_table,
+                columns=requested_columns if requested_columns else None,
+                where_clause=" AND ".join(where_parts),
+                where_params=where_params,
+                limit=20
+            )
+        elif search_terms:
+            # Search in text columns
+            if text_columns:
+                results = self.db_service.search_table(
+                    table_name=matched_table,
+                    search_columns=text_columns[:3],  # Limit to first 3 columns
+                    search_term=search_terms[0],
+                    limit=20
+                )
+            
+            # If no results, try exact match on ID columns using first numeric mention
+            if not results and id_columns:
+                # Extract numbers from message
+                numbers = re.findall(r'\b\d+\b', user_message)
+                if numbers:
+                    for id_col in id_columns[:2]:  # Try first 2 ID columns
+                        try:
+                            results = self.db_service.query_table(
+                                table_name=matched_table,
+                                where_clause=f"`{id_col}` = %s",
+                                where_params=[numbers[0]],
+                                limit=10
+                            )
+                            if results:
+                                break
+                        except:
+                            continue
+        else:
+            # No search terms - get recent/limited records
+            results = self.db_service.query_table(
+                table_name=matched_table,
+                limit=10
+            )
+        
+        formatted_data = self._format_generic_results(results, matched_table)
         
         return {
-            'query_type': 'icd9',
-            'data': icd9_records,
+            'query_type': matched_table,
+            'data': results,
             'formatted_data': formatted_data,
-            'needs_data': True
+            'needs_data': True  # Always True for data queries, even if empty
         }
     
-    def _format_icd9(self, icd9_records: List[Dict]) -> str:
-        """Format ICD9 data for LLM"""
-        if not icd9_records:
-            return "No ICD9 codes found matching your search."
+    def _extract_search_terms(self, user_message: str, message_lower: str) -> List[str]:
+        """Extract search terms from user message"""
+        # Remove common question words
+        stop_words = ['what', 'is', 'are', 'the', 'a', 'an', 'for', 'with', 'about', 
+                     'show', 'me', 'tell', 'find', 'search', 'get', 'list', 'all']
         
-        if len(icd9_records) == 1:
-            # Single result - detailed format
-            record = icd9_records[0]
-            formatted = f"ICD9 Code: {record.get('ICD9Code', 'N/A')}\n"
-            formatted += f"Description: {record.get('Description', 'N/A')}\n"
-            formatted += f"ICD9 Number: {record.get('ICD9Num', 'N/A')}"
-            if record.get('DateTStamp'):
-                try:
-                    dt = datetime.strptime(record.get('DateTStamp', ''), '%Y-%m-%d %H:%M:%S')
-                    formatted += f"\nDate: {dt.strftime('%B %d, %Y')}"
-                except:
-                    formatted += f"\nDate: {record.get('DateTStamp', 'N/A')}"
+        # Extract quoted strings
+        quoted = re.findall(r'["\']([^"\']+)["\']', user_message)
+        if quoted:
+            return quoted
+        
+        # Extract words after question keywords
+        patterns = [
+            r'(?:what|tell|show|find|search|get|list).*?(?:is|are|for|about)\s+([^\s]+(?:\s+[^\s]+){0,3})',
+            r'(?:code|description|name|id|number)\s+([^\s]+)',
+        ]
+        
+        for pattern in patterns:
+            match = re.search(pattern, message_lower, re.IGNORECASE)
+            if match:
+                term = match.group(1).strip()
+                # Remove stop words
+                words = [w for w in term.split() if w.lower() not in stop_words]
+                if words:
+                    return [' '.join(words)]
+        
+        # Fallback: extract significant words (3+ chars, not stop words)
+        words = re.findall(r'\b\w{3,}\b', message_lower)
+        significant = [w for w in words if w.lower() not in stop_words]
+        return significant[:3]  # Return first 3 significant words
+    
+    def _format_generic_results(self, results: List[Dict], table_name: str) -> str:
+        """Format generic query results for LLM"""
+        if not results:
+            return f"No information found in {table_name} table matching your query. There are no records available."
+        
+        if len(results) == 1:
+            # Single result - show all fields
+            record = results[0]
+            formatted = f"Information from {table_name}:\n\n"
+            for key, value in record.items():
+                if value is not None and str(value).strip():
+                    formatted += f"{key}: {value}\n"
+            return formatted
         else:
-            # Multiple results - concise format
-            formatted = f"Found {len(icd9_records)} ICD9 code(s):\n\n"
-            for i, record in enumerate(icd9_records[:15], 1):  # Limit to 15
-                formatted += f"{i}. Code: {record.get('ICD9Code', 'N/A')} - {record.get('Description', 'N/A')[:60]}"
-                if record.get('ICD9Num'):
-                    formatted += f" (ID: {record.get('ICD9Num')})"
-                formatted += "\n"
-        
-        return formatted
+            # Multiple results - show key fields
+            formatted = f"Found {len(results)} result(s) from {table_name}:\n\n"
+            
+            # Identify key columns (usually first few or ID/name columns)
+            if results:
+                key_columns = list(results[0].keys())[:5]  # First 5 columns
+                
+                for i, record in enumerate(results[:15], 1):  # Limit to 15
+                    formatted += f"{i}. "
+                    key_values = []
+                    for col in key_columns:
+                        val = record.get(col)
+                        if val is not None and str(val).strip():
+                            key_values.append(f"{col}={val}")
+                    formatted += " | ".join(key_values[:3])  # Show first 3 key-value pairs
+                    formatted += "\n"
+            
+            return formatted
 
 
