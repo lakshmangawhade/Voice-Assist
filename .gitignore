@@ -39,3 +39,7 @@ dist/
 build/
 .pytest_cache/
 *.pyc
+
+# Large database files
+backend/data/*.sql
+backend/data/data1.sql
