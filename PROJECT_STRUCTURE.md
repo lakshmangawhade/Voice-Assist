@@ -79,7 +79,7 @@ Voice-Assist/
 - Communication with backend via REST API
 
 **Features**:
-- Wake word detection ("krish")
+- Wake word detection ("giva")
 - Voice input and text input
 - Real-time chat interface
 - Audio playback from backend TTS

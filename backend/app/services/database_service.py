@@ -569,6 +569,50 @@ class DatabaseService:
             print(f"Query execution error: {e}")
             raise  # Re-raise for proper error handling
     
+    def execute_query(
+        self,
+        query: str,
+        params: Optional[Tuple] = None,
+    ) -> List[Dict]:
+        """
+        Execute a parameterised query (SELECT, UPDATE, INSERT, DELETE).
+
+        For SELECT: returns list of dicts.
+        For mutations: commits and returns an empty list.
+
+        Only the ``SchedulingOpsService`` should call this for writes;
+        all other callers should use ``_execute_query_raw`` (SELECT only).
+        """
+        if not self.is_initialized():
+            return []
+
+        q = query.strip().upper()
+        is_select = q.startswith("SELECT")
+
+        try:
+            cursor = self.conn.cursor(dictionary=True)
+            if params:
+                cursor.execute(query, params)
+            else:
+                cursor.execute(query)
+
+            if is_select:
+                results = cursor.fetchall()
+                cursor.close()
+                return list(results) if results else []
+            else:
+                self.conn.commit()
+                cursor.close()
+                return []
+        except Exception as e:
+            if not is_select:
+                try:
+                    self.conn.rollback()
+                except Exception:
+                    pass
+            print(f"execute_query error: {e}")
+            raise
+
     def close(self):
         """Close database connection"""
         if self.conn:

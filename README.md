@@ -1,4 +1,4 @@
-# Dental Voice AI Assistant - Krish
+# Dental Voice AI Assistant - Giva
 
 A voice-activated AI assistant for dental practices with separate Python backend and React frontend. Powered by Groq's Llama 3.1 8B Instant model and Deepgram for high-quality text-to-speech.
 
@@ -91,7 +91,7 @@ Voice-Assist/
 
 ## Features
 
-- 🎤 **Wake Word Detection**: Say "krish" to activate voice commands
+- 🎤 **Wake Word Detection**: Say "giva" to activate voice commands
 - 🎯 **Voice Recognition**: Browser-based speech-to-text
 - 💬 **Text & Voice Chat**: Interact via text input or voice commands
 - 🤖 **AI-Powered**: Powered by Groq's Llama 3.1 8B Instant model (via backend)
@@ -127,7 +127,7 @@ Voice-Assist/
 
 ### Wake Word Activation
 
-1. **Say "krish"** - The microphone will automatically activate and start listening
+1. **Say "giva"** - The microphone will automatically activate and start listening
 2. Speak your command or question
 3. The AI will respond both in text and voice
 4. Mic stays open for 5 seconds for continuous conversation

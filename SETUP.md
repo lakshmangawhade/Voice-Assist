@@ -97,7 +97,7 @@ This guide will help you set up both the backend and frontend of the Dental Voic
    - Should see: `✅ Backend connected successfully`
 
 3. **Test Voice:**
-   - Say "krish" to activate
+   - Say "giva" to activate
    - Or click the microphone button
    - Speak a message and wait for AI response
 

@@ -1,6 +1,7 @@
 """
-FastAPI Backend for Dental Voice AI Assistant
-Handles LLM (Groq), Deepgram TTS, and Twilio calling agent
+FastAPI Backend for Dental Voice AI Assistant (Giva)
+Handles LLM (Groq), Deepgram TTS, Twilio calling agent, and the
+intent+SQL pipeline.
 """
 
 from fastapi import FastAPI, HTTPException, Request, Form
@@ -28,8 +29,8 @@ print(f"TWILIO_ACCOUNT_SID exists: {bool(os.getenv('TWILIO_ACCOUNT_SID'))}")
 # Initialize FastAPI app
 app = FastAPI(
     title="Dental Voice AI Backend",
-    description="Backend API for Dental Voice AI Assistant",
-    version="1.0.0"
+    description="Backend API for Dental Voice AI Assistant (Giva)",
+    version="2.0.0"
 )
 
 # CORS configuration
@@ -53,13 +54,13 @@ twilio_service = TwilioService()
 
 # Initialize database and query services
 db_service = DatabaseService()
-db_initialized = db_service.initialize()  # Use initialize() method
-query_service = QueryService(db_service) if db_initialized else None
+db_initialized = db_service.initialize()
+query_service = QueryService(db_service, intent_service) if db_initialized else None
 
 if db_initialized:
-    print("✓ Database initialized successfully. Query service available.")
+    print("[OK] Database initialised. Pipeline (intent->SQL->format) ready.")
 else:
-    print("⚠ Warning: Database initialization failed. Query service unavailable.")
+    print("[WARN] Database initialisation failed. Pipeline unavailable.")
 
 
 # Request/Response models
@@ -71,6 +72,7 @@ class Message(BaseModel):
 class ChatRequest(BaseModel):
     message: str
     conversation_history: List[Message]
+    confirmed: Optional[bool] = False  # for WRITE operations
 
 
 class ChatResponse(BaseModel):
@@ -78,6 +80,8 @@ class ChatResponse(BaseModel):
     success: bool
     error: Optional[str] = None
     call_info: Optional[Dict] = None
+    intent: Optional[str] = None
+    follow_up: Optional[str] = None
 
 
 class TTSRequest(BaseModel):
@@ -108,8 +112,8 @@ class CallResponse(BaseModel):
 async def root():
     return {
         "status": "healthy",
-        "service": "Dental Voice AI Backend",
-        "version": "1.0.0"
+        "service": "Dental Voice AI Backend (Giva)",
+        "version": "2.0.0"
     }
 
 
@@ -121,54 +125,94 @@ async def health_check():
         "llm_configured": llm_service.is_configured(),
         "tts_configured": tts_service.is_configured(),
         "twilio_configured": twilio_service.is_configured(),
-        "database_initialized": db_initialized
+        "database_initialized": db_initialized,
+        "pipeline_ready": query_service is not None,
     }
 
 
 @app.post("/api/chat", response_model=ChatResponse)
 async def chat(request: ChatRequest):
     """
-    Process user message and get AI response using Groq LLM
-    Also detects intents for appointment cancellation/rescheduling
+    Process user message through the pipeline-first architecture:
+
+    1. Run intent+SQL pipeline  ->  exact DB results + speech
+    2. For STRUCTURED intents (appointments, patients, providers, etc.)
+       return pipeline speech **directly** — no LLM, no hallucination.
+    3. For GENERAL_QUERY or greetings, pass data context to the LLM
+       for a conversational response.
     """
+
+    # Structured intents whose pipeline speech is the FINAL answer.
+    # The LLM is never consulted for these — eliminates all hallucination.
+    _STRUCTURED_INTENTS = {
+        "COUNT_APPOINTMENTS", "LIST_APPOINTMENTS",
+        "PROVIDER_SCHEDULE", "PATIENT_UPCOMING",
+        "AVAILABILITY", "PATIENT_LOOKUP",
+        "RESCHEDULE_APPOINTMENT", "CANCEL_APPOINTMENT",
+        "CREATE_APPOINTMENT",
+    }
+
     try:
         if not request.message or not request.message.strip():
             raise HTTPException(status_code=400, detail="Message cannot be empty")
-        
-        # Get provider number from request if available (for doctor-specific queries)
-        # For now, we'll use None (all appointments) or you can add prov_num to ChatRequest
-        prov_num = None  # TODO: Extract from request if needed
-        
-        response_text = await llm_service.get_response(
-            user_message=request.message,
-            conversation_history=request.conversation_history,
-            query_service=query_service,
-            prov_num=prov_num
-        )
-        
-        # Detect intent
-        intent_result = intent_service.detect_intent(request.message, response_text)
-        
-        # Check if call should be triggered
+
+        response_text = ""
+        pipeline_intent = ""
+        pipeline_follow_up = None
+
+        # ── Step 1: Run the intent+SQL pipeline ──────────────────────
+        if query_service:
+            pipeline_result = await query_service.process(
+                request.message,
+                context={},
+                confirmed=request.confirmed or False,
+            )
+            pipeline_intent = pipeline_result.get("intent", "")
+            pipeline_speech = pipeline_result.get("speech", "")
+            pipeline_follow_up = pipeline_result.get("follow_up_question")
+
+            # ── Step 2: Structured intent with data → direct answer ──
+            if pipeline_speech and pipeline_intent in _STRUCTURED_INTENTS:
+                response_text = pipeline_speech
+
+            else:
+                # ── Step 3: General / conversational → LLM ───────────
+                formatted_data = pipeline_result.get("formatted_data", "")
+                response_text = await llm_service.get_response(
+                    user_message=request.message,
+                    conversation_history=request.conversation_history,
+                    formatted_data=formatted_data,
+                )
+        else:
+            # No database available → pure conversational LLM
+            response_text = await llm_service.get_response(
+                user_message=request.message,
+                conversation_history=request.conversation_history,
+            )
+
+        # Detect call-triggering intent (Twilio integration)
+        twilio_intent = intent_service.detect_intent(request.message, response_text)
         call_info = None
-        if intent_service.should_trigger_call(intent_result):
+        if intent_service.should_trigger_call(twilio_intent):
             call_info = {
-                'intent': intent_result['intent'],
-                'requires_call': True,
-                'extracted_info': intent_result['extracted_info']
+                "intent": twilio_intent["intent"],
+                "requires_call": True,
+                "extracted_info": twilio_intent["extracted_info"],
             }
-        
+
         return ChatResponse(
             response=response_text,
             success=True,
-            call_info=call_info
+            call_info=call_info,
+            intent=pipeline_intent or None,
+            follow_up=pipeline_follow_up,
         )
     except Exception as e:
         error_message = str(e) if str(e) else "An error occurred while processing your request."
         return ChatResponse(
             response=f"I apologize, but I encountered an error: {error_message}. Please try again.",
             success=False,
-            error=error_message
+            error=error_message,
         )
 
 
@@ -181,9 +225,9 @@ async def text_to_speech(request: TTSRequest):
     try:
         if not request.text or not request.text.strip():
             raise HTTPException(status_code=400, detail="Text cannot be empty")
-        
+
         audio_data = await tts_service.synthesize_speech(request.text)
-        
+
         return TTSResponse(
             audio_url=audio_data,
             success=True
@@ -207,20 +251,20 @@ async def initiate_call(request: CallRequest):
                 success=False,
                 error="Twilio is not configured. Please set Twilio credentials in .env file."
             )
-        
+
         if request.intent not in ['cancel', 'reschedule']:
             return CallResponse(
                 success=False,
                 error="Intent must be 'cancel' or 'reschedule'"
             )
-        
+
         result = twilio_service.make_call(
             to_phone=request.phone_number,
             intent=request.intent,
             patient_name=request.patient_name,
             appointment_date=request.appointment_date
         )
-        
+
         if result.get('success'):
             return CallResponse(
                 success=True,
@@ -248,15 +292,14 @@ async def call_handler(request: Request):
         form_data = await request.form()
         intent = request.query_params.get('intent', 'reschedule')
         patient_name = request.query_params.get('patient_name', None)
-        
+
         twiml = twilio_service.generate_twiml_greeting(
             intent=intent,
             patient_name=patient_name
         )
-        
+
         return Response(content=twiml, media_type="application/xml")
     except Exception as e:
-        # Return error TwiML
         response = VoiceResponse()
         response.say("We're sorry, there was an error processing your call. Please try again later.", voice='alice')
         response.hangup()
@@ -272,14 +315,14 @@ async def handle_input(request: Request):
         form_data = await request.form()
         digits = form_data.get('Digits', '')
         intent = request.query_params.get('intent', 'reschedule')
-        
+
         if intent == 'reschedule':
             twiml = twilio_service.generate_twiml_reschedule(digits)
         elif intent == 'cancel':
             twiml = twilio_service.generate_twiml_cancel(digits)
         else:
             twiml = twilio_service.generate_twiml_greeting(intent)
-        
+
         return Response(content=twiml, media_type="application/xml")
     except Exception as e:
         response = VoiceResponse()
@@ -297,16 +340,14 @@ async def handle_reschedule(request: Request):
         form_data = await request.form()
         speech_result = form_data.get('SpeechResult', '')
         confidence = form_data.get('Confidence', '0')
-        
-        # Process the speech result (preferred date/time)
-        # In production, you would parse this and store it
+
         print(f"Reschedule request: {speech_result} (confidence: {confidence})")
-        
+
         twiml = twilio_service.generate_twiml_confirmation(
             preferred_date=speech_result,
             intent='reschedule'
         )
-        
+
         return Response(content=twiml, media_type="application/xml")
     except Exception as e:
         response = VoiceResponse()
@@ -323,14 +364,14 @@ async def handle_confirmation(request: Request):
     try:
         form_data = await request.form()
         speech_result = form_data.get('SpeechResult', '').lower()
-        
+
         response = VoiceResponse()
-        
+
         if 'yes' in speech_result or 'yeah' in speech_result:
             response.say("Thank you. We'll be in touch soon. Have a great day!", voice='alice')
         else:
             response.say("Thank you for calling. Have a great day!", voice='alice')
-        
+
         response.hangup()
         return Response(content=str(response), media_type="application/xml")
     except Exception as e:

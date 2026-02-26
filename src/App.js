@@ -122,7 +122,7 @@ const DentalVoiceAI = () => {
   const audioRef = useRef(null);
   const audioContextRef = useRef(null);
   const hasShownWakeWordMessageRef = useRef(false);
-  const WAKE_WORD = 'krish';
+  const WAKE_WORD = 'giva';
   const SILENCE_TIMEOUT = 5000;
 
   const addToLog = (speaker, message, type = 'normal') => {
@@ -335,7 +335,7 @@ const DentalVoiceAI = () => {
       stopCommandRecognition();
       setIsWakeWordMode(true);
       setTimeout(() => startWakeWordDetection(), 300);
-      //addToLog('System', 'Returning to wake word mode. Say "krish" to continue.', 'system');
+      //addToLog('System', 'Returning to wake word mode. Say "giva" to continue.', 'system');
     }, SILENCE_TIMEOUT);
   };
 
@@ -380,11 +380,11 @@ const DentalVoiceAI = () => {
     try {
       wakeWordRecognitionRef.current.start();
       wakeWordActiveRef.current = true;
-      console.log('✅ Wake word detection started - listening for "krish"');
+      console.log('✅ Wake word detection started - listening for "giva"');
       
       // Only show the message once when first starting
       //if (!hasShownWakeWordMessageRef.current) {
-      //  addToLog('System', `Listening for wake word "krish"...`, 'system');
+      //  addToLog('System', `Listening for wake word "giva"...`, 'system');
       //  hasShownWakeWordMessageRef.current = true;
       //}
     } catch (error) {
@@ -908,7 +908,7 @@ const DentalVoiceAI = () => {
       if (isFirstMessage) {
         // Add AI response to intro messages
         const aiMessageLog = {
-          speaker: 'Krish',
+          speaker: 'Giva',
           message: responseText,
           type: 'ai',
           timestamp: new Date().toLocaleTimeString()
@@ -933,7 +933,7 @@ const DentalVoiceAI = () => {
           }, 300);
         }, 500);
       } else {
-        addToLog('Krish', responseText, 'ai');
+        addToLog('Giva', responseText, 'ai');
         setIsLoading(false);
       }
       
@@ -1080,7 +1080,7 @@ const DentalVoiceAI = () => {
             {/* Text below animation - only show if no messages */}
             {introMessages.length === 0 && (
               <div className="intro-text">
-                <h2 className="intro-title">Say "Krish" to activate</h2>
+                <h2 className="intro-title">Say "Giva" to activate</h2>
                 <p className="intro-subtitle">Or type your message below</p>
               </div>
             )}
@@ -1093,7 +1093,7 @@ const DentalVoiceAI = () => {
                     {log.type === 'ai' && (
                       <img 
                         src={profilePhoto} 
-                        alt="Krish" 
+                        alt="Giva" 
                         className="intro-profile-photo"
                       />
                     )}
@@ -1110,12 +1110,12 @@ const DentalVoiceAI = () => {
                   <div className="intro-message-wrapper ai">
                     <img 
                       src={profilePhoto} 
-                      alt="Krish" 
+                      alt="Giva" 
                       className="intro-profile-photo"
                     />
                     <div className="intro-message ai">
                       <div className="intro-message-content">
-                        <span className="typing-indicator">Krish is thinking...</span>
+                        <span className="typing-indicator">Giva is thinking...</span>
                       </div>
                     </div>
                   </div>
@@ -1154,7 +1154,7 @@ const DentalVoiceAI = () => {
           {conversationLog.length === 0 && (
             <div className="empty-state">
               <Mic className="empty-icon" />
-              <p className="empty-title">Say "krish" to activate</p>
+              <p className="empty-title">Say "giva" to activate</p>
               <p className="empty-subtitle">Or type a message below to start chatting</p>
             </div>
           )}
@@ -1164,7 +1164,7 @@ const DentalVoiceAI = () => {
               {log.type === 'ai' && (
                 <img 
                   src={profilePhoto} 
-                  alt="Krish" 
+                  alt="Giva" 
                   className="message-profile-photo"
                 />
               )}
@@ -1181,12 +1181,12 @@ const DentalVoiceAI = () => {
             <div className="message-wrapper ai">
               <img 
                 src={profilePhoto} 
-                alt="Krish" 
+                alt="Giva" 
                 className="message-profile-photo"
               />
               <div className="message ai">
                 <div className="message-content">
-                  <span className="typing-indicator">Krish is thinking...</span>
+                  <span className="typing-indicator">Giva is thinking...</span>
                 </div>
               </div>
             </div>
@@ -1198,7 +1198,7 @@ const DentalVoiceAI = () => {
         {showTimeoutPopup && (
           <div className={`timeout-popup theme-${theme}`}>
             <div className={`timeout-popup-content theme-${theme}`}>
-              <p className="timeout-popup-text">Say "Krish" to activate</p>
+              <p className="timeout-popup-text">Say "Giva" to activate</p>
             </div>
           </div>
         )}
@@ -1280,7 +1280,7 @@ const DentalVoiceAI = () => {
               ref={inputRef}
               type="text"
               className="text-input"
-              placeholder={isListening ? 'Listening...' : isWakeWordMode ? 'Say "krish" or type a message...' : 'Type your message here...'}
+              placeholder={isListening ? 'Listening...' : isWakeWordMode ? 'Say "giva" or type a message...' : 'Type your message here...'}
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
               disabled={isListening || isLoading}

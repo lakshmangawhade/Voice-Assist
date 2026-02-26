@@ -1,0 +1,353 @@
+[
+  {
+    "id": 1,
+    "prompt": "How many appointments do I have today?",
+    "expected_intent": "COUNT_APPOINTMENTS",
+    "required_slots": ["raw_time_expression"],
+    "constraints": ["must contain today or current date"]
+  },
+  {
+    "id": 2,
+    "prompt": "Show me tomorrow's schedule",
+    "expected_intent": "LIST_APPOINTMENTS",
+    "required_slots": ["raw_time_expression"],
+    "constraints": ["must reference tomorrow"]
+  },
+  {
+    "id": 3,
+    "prompt": "How many patients are coming next Monday?",
+    "expected_intent": "COUNT_APPOINTMENTS",
+    "required_slots": ["raw_time_expression"],
+    "constraints": ["must reference next Monday"]
+  },
+  {
+    "id": 4,
+    "prompt": "List appointments for Dr. Smith tomorrow morning",
+    "expected_intent": "PROVIDER_SCHEDULE",
+    "required_slots": ["provider", "raw_time_expression"],
+    "constraints": ["provider must contain Smith", "time must include morning"]
+  },
+  {
+    "id": 5,
+    "prompt": "What appointments does patient John Doe have coming up?",
+    "expected_intent": "PATIENT_UPCOMING",
+    "required_slots": ["patient"],
+    "constraints": ["patient must contain John Doe"]
+  },
+  {
+    "id": 6,
+    "prompt": "Is Dr. Adams available this Friday afternoon?",
+    "expected_intent": "AVAILABILITY",
+    "required_slots": ["provider", "raw_time_expression"],
+    "constraints": ["provider must contain Adams", "time must include Friday and afternoon"]
+  },
+  {
+    "id": 7,
+    "prompt": "Cancel appointment 1234",
+    "expected_intent": "CANCEL_APPOINTMENT",
+    "required_slots": ["appointment_identifier"],
+    "constraints": ["must be write intent"]
+  },
+  {
+    "id": 8,
+    "prompt": "Reschedule appointment 5678 to next Tuesday at 3pm",
+    "expected_intent": "RESCHEDULE_APPOINTMENT",
+    "required_slots": ["appointment_identifier", "raw_time_expression"],
+    "constraints": ["must be write intent"]
+  },
+  {
+    "id": 9,
+    "prompt": "Book a new appointment for Jane Miller with Dr. Johnson on Thursday morning",
+    "expected_intent": "CREATE_APPOINTMENT",
+    "required_slots": ["patient", "provider", "raw_time_expression"],
+    "constraints": ["must be write intent"]
+  },
+  {
+    "id": 10,
+    "prompt": "How many appointments are there between 4 and 6?",
+    "expected_intent": "COUNT_APPOINTMENTS",
+    "required_slots": ["raw_time_expression"],
+    "constraints": ["time range between 4 and 6"]
+  },
+  {
+    "id": 11,
+    "prompt": "Show me the schedule for this week",
+    "expected_intent": "LIST_APPOINTMENTS",
+    "required_slots": ["raw_time_expression"],
+    "constraints": ["must reference this week"]
+  },
+  {
+    "id": 12,
+    "prompt": "Find patient Sarah Connor",
+    "expected_intent": "PATIENT_LOOKUP",
+    "required_slots": ["patient"],
+    "constraints": ["patient must contain Sarah Connor"]
+  },
+  {
+    "id": 13,
+    "prompt": "What's on the schedule after lunch today?",
+    "expected_intent": "LIST_APPOINTMENTS",
+    "required_slots": ["raw_time_expression"],
+    "constraints": ["time must include after lunch and today"]
+  },
+  {
+    "id": 14,
+    "prompt": "How many patients are coming in the morning?",
+    "expected_intent": "COUNT_APPOINTMENTS",
+    "required_slots": ["raw_time_expression"],
+    "constraints": ["time must include morning"]
+  },
+  {
+    "id": 15,
+    "prompt": "List all completed appointments yesterday",
+    "expected_intent": "LIST_APPOINTMENTS",
+    "required_slots": ["raw_time_expression", "status"],
+    "constraints": ["status must be completed", "time must be yesterday"]
+  },
+  {
+    "id": 16,
+    "prompt": "Any broken appointments this week?",
+    "expected_intent": "LIST_APPOINTMENTS",
+    "required_slots": ["raw_time_expression", "status"],
+    "constraints": ["status must be broken"]
+  },
+  {
+    "id": 17,
+    "prompt": "Who is coming in 2 hours?",
+    "expected_intent": "LIST_APPOINTMENTS",
+    "required_slots": ["raw_time_expression"],
+    "constraints": ["time must reference 2 hours"]
+  },
+  {
+    "id": 18,
+    "prompt": "Show Dr. Lee's schedule next week",
+    "expected_intent": "PROVIDER_SCHEDULE",
+    "required_slots": ["provider", "raw_time_expression"],
+    "constraints": ["provider must contain Lee", "time must include next week"]
+  },
+  {
+    "id": 19,
+    "prompt": "How many new patients are coming this Friday?",
+    "expected_intent": "COUNT_APPOINTMENTS",
+    "required_slots": ["raw_time_expression"],
+    "constraints": ["time must include Friday"]
+  },
+  {
+    "id": 20,
+    "prompt": "What procedures are scheduled for tomorrow?",
+    "expected_intent": "LIST_APPOINTMENTS",
+    "required_slots": ["raw_time_expression"],
+    "constraints": ["must reference tomorrow"]
+  },
+  {
+    "id": 21,
+    "prompt": "Look up patient with last name Williams",
+    "expected_intent": "PATIENT_LOOKUP",
+    "required_slots": ["patient"],
+    "constraints": ["patient must contain Williams"]
+  },
+  {
+    "id": 22,
+    "prompt": "Cancel the 3pm appointment tomorrow",
+    "expected_intent": "CANCEL_APPOINTMENT",
+    "required_slots": [],
+    "constraints": ["must be write intent"]
+  },
+  {
+    "id": 23,
+    "prompt": "Move my 10am to 2pm tomorrow",
+    "expected_intent": "RESCHEDULE_APPOINTMENT",
+    "required_slots": ["raw_time_expression"],
+    "constraints": ["must be write intent"]
+  },
+  {
+    "id": 24,
+    "prompt": "Tell me about ICD9 codes for diabetes",
+    "expected_intent": "GENERAL_QUERY",
+    "required_slots": [],
+    "constraints": ["should be general query"]
+  },
+  {
+    "id": 25,
+    "prompt": "What billing claims are pending?",
+    "expected_intent": "GENERAL_QUERY",
+    "required_slots": [],
+    "constraints": ["should be general query about claims"]
+  },
+  {
+    "id": 26,
+    "prompt": "Show afternoon appointments for clinic downtown",
+    "expected_intent": "LIST_APPOINTMENTS",
+    "required_slots": ["raw_time_expression"],
+    "constraints": ["time must include afternoon"]
+  },
+  {
+    "id": 27,
+    "prompt": "Is there any availability from 9 to 11 tomorrow?",
+    "expected_intent": "AVAILABILITY",
+    "required_slots": ["raw_time_expression"],
+    "constraints": ["time must include 9 to 11 and tomorrow"]
+  },
+  {
+    "id": 28,
+    "prompt": "How many appointments were broken last week?",
+    "expected_intent": "COUNT_APPOINTMENTS",
+    "required_slots": ["raw_time_expression", "status"],
+    "constraints": ["status must be broken"]
+  },
+  {
+    "id": 29,
+    "prompt": "Create appointment for patient 42 with Dr. Brown at 10am Thursday",
+    "expected_intent": "CREATE_APPOINTMENT",
+    "required_slots": ["patient", "provider", "raw_time_expression"],
+    "constraints": ["must be write intent"]
+  },
+  {
+    "id": 30,
+    "prompt": "What's the schedule for the day after tomorrow?",
+    "expected_intent": "LIST_APPOINTMENTS",
+    "required_slots": ["raw_time_expression"],
+    "constraints": ["time must reference day after tomorrow"]
+  },
+  {
+    "id": 31,
+    "prompt": "Show me patient record for Bob Anderson",
+    "expected_intent": "PATIENT_LOOKUP",
+    "required_slots": ["patient"],
+    "constraints": ["patient must contain Bob Anderson"]
+  },
+  {
+    "id": 32,
+    "prompt": "How many hygiene appointments are tomorrow?",
+    "expected_intent": "COUNT_APPOINTMENTS",
+    "required_slots": ["raw_time_expression"],
+    "constraints": ["time must include tomorrow"]
+  },
+  {
+    "id": 33,
+    "prompt": "Next Monday how many appointments?",
+    "expected_intent": "COUNT_APPOINTMENTS",
+    "required_slots": ["raw_time_expression"],
+    "constraints": ["time must reference next Monday"]
+  },
+  {
+    "id": 34,
+    "prompt": "Good morning, how are you?",
+    "expected_intent": "GENERAL_QUERY",
+    "required_slots": [],
+    "constraints": ["should be general/greeting"]
+  },
+  {
+    "id": 35,
+    "prompt": "Show scheduled appointments for April 30 2009",
+    "expected_intent": "LIST_APPOINTMENTS",
+    "required_slots": ["raw_time_expression"],
+    "constraints": ["date must be 2009-04-30"]
+  },
+  {
+    "id": 36,
+    "prompt": "What does patient Nancy Green have scheduled?",
+    "expected_intent": "PATIENT_UPCOMING",
+    "required_slots": ["patient"],
+    "constraints": ["patient must contain Nancy Green"]
+  },
+  {
+    "id": 37,
+    "prompt": "Count appointments for provider 7 this week",
+    "expected_intent": "COUNT_APPOINTMENTS",
+    "required_slots": ["provider", "raw_time_expression"],
+    "constraints": ["provider id must be 7"]
+  },
+  {
+    "id": 38,
+    "prompt": "Any openings for Dr. Patel between 2 and 5 on Wednesday?",
+    "expected_intent": "AVAILABILITY",
+    "required_slots": ["provider", "raw_time_expression"],
+    "constraints": ["provider must contain Patel"]
+  },
+  {
+    "id": 39,
+    "prompt": "Reschedule patient Davis appointment to next Friday morning",
+    "expected_intent": "RESCHEDULE_APPOINTMENT",
+    "required_slots": ["patient", "raw_time_expression"],
+    "constraints": ["must be write intent"]
+  },
+  {
+    "id": 40,
+    "prompt": "I need to cancel my appointment",
+    "expected_intent": "CANCEL_APPOINTMENT",
+    "required_slots": [],
+    "constraints": ["must be write intent"]
+  },
+  {
+    "id": 41,
+    "prompt": "Show me early morning schedule",
+    "expected_intent": "LIST_APPOINTMENTS",
+    "required_slots": ["raw_time_expression"],
+    "constraints": ["time must include morning"]
+  },
+  {
+    "id": 42,
+    "prompt": "What procedures are available for consultation?",
+    "expected_intent": "GENERAL_QUERY",
+    "required_slots": [],
+    "constraints": ["should be general query"]
+  },
+  {
+    "id": 43,
+    "prompt": "Patient lookup for ID 1001",
+    "expected_intent": "PATIENT_LOOKUP",
+    "required_slots": ["patient"],
+    "constraints": ["patient id should be 1001"]
+  },
+  {
+    "id": 44,
+    "prompt": "Show appointments in 30 minutes",
+    "expected_intent": "LIST_APPOINTMENTS",
+    "required_slots": ["raw_time_expression"],
+    "constraints": ["time must reference 30 minutes"]
+  },
+  {
+    "id": 45,
+    "prompt": "How many ASAP appointments?",
+    "expected_intent": "COUNT_APPOINTMENTS",
+    "required_slots": [],
+    "constraints": ["may reference ASAP status"]
+  },
+  {
+    "id": 46,
+    "prompt": "Show me the Saturday schedule",
+    "expected_intent": "LIST_APPOINTMENTS",
+    "required_slots": ["raw_time_expression"],
+    "constraints": ["time must include Saturday"]
+  },
+  {
+    "id": 47,
+    "prompt": "Who has appointments in the evening?",
+    "expected_intent": "LIST_APPOINTMENTS",
+    "required_slots": ["raw_time_expression"],
+    "constraints": ["time must include evening"]
+  },
+  {
+    "id": 48,
+    "prompt": "Can you tell me about allergy records?",
+    "expected_intent": "GENERAL_QUERY",
+    "required_slots": [],
+    "constraints": ["should be general query about allergies"]
+  },
+  {
+    "id": 49,
+    "prompt": "Book Dr. Smith for patient 200 tomorrow at noon",
+    "expected_intent": "CREATE_APPOINTMENT",
+    "required_slots": ["patient", "provider", "raw_time_expression"],
+    "constraints": ["must be write intent"]
+  },
+  {
+    "id": 50,
+    "prompt": "Any planned appointments this month?",
+    "expected_intent": "LIST_APPOINTMENTS",
+    "required_slots": ["raw_time_expression"],
+    "constraints": ["may reference planned status"]
+  }
+]
+
